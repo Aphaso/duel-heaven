@@ -12,3 +12,20 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Card {
+  id        Int      @id
+  name      String
+  type      String
+  frameType String?
+  desc      String   @db.Text
+  atk       Int?
+  def       Int?
+  level     Int?
+  race      String?
+  attribute String?
+  archetype String?
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+}
