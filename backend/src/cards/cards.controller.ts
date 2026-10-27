@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { CardsService } from './cards.service';
 import { CardsSyncService } from './cards-sync.service';
 import { CreateCardDto } from './create-card.dto';
@@ -11,8 +11,21 @@ export class CardsController {
     ) {}
 
     @Get()
-    findAll() {
-        return this.cardsService.findAll()
+    search(
+        @Query('search') search?: string,
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+        @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit = 20,
+    ) {
+        return this.cardsService.search({
+            search,
+            page: Math.max(page, 1),
+            limit: Math.min(Math.max(limit, 1), 100),
+        });
+    }
+
+    @Get(':id')
+    findOne(@Param('id', ParseIntPipe) id: number) {
+        return this.cardsService.findOne(id);
     }
 
     @Post()
