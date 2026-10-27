@@ -1,6 +1,7 @@
-import { Body, Controller, DefaultValuePipe, Get, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Get, Header, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { CardsService } from './cards.service';
 import { CardsSyncService } from './cards-sync.service';
+import { CardImagesService } from './card-images.service';
 import { CreateCardDto } from './create-card.dto';
 
 @Controller('cards')
@@ -8,6 +9,7 @@ export class CardsController {
     constructor(
         private readonly cardsService: CardsService,
         private readonly cardsSyncService: CardsSyncService,
+        private readonly cardImagesService: CardImagesService
     ) {}
 
     @Get()
@@ -23,6 +25,27 @@ export class CardsController {
         });
     }
 
+    @Post('sync')
+    sync() {
+        return this.cardsSyncService.sync();
+    }
+
+    @Post('images/sync')
+    syncImages() {
+        return this.cardImagesService.start();
+    }
+
+    @Get('images/status')
+    imagesStatus() {
+        return this.cardImagesService.status();
+    }
+
+    @Get(':id/image')
+    @Header('Cache-Control', 'public, max-age=86400')
+    imag(@Param('id', ParseIntPipe) id: number) {
+        return this.cardImagesService.getImage(id);
+    }
+
     @Get(':id')
     findOne(@Param('id', ParseIntPipe) id: number) {
         return this.cardsService.findOne(id);
@@ -31,10 +54,5 @@ export class CardsController {
     @Post()
     create(@Body() dto: CreateCardDto) {
         return this.cardsService.create(dto);
-    }
-
-    @Post('sync')
-    sync() {
-        return this.cardsSyncService.sync();
     }
 }

@@ -13,6 +13,9 @@ dist/
 ### Prisma ###
 backend/src/generated/
 
+### Local Image Storage ###
+backend/storage/
+
 ### VS Code ###
 .vscode/
 
