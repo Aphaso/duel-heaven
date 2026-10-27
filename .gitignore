@@ -8,7 +8,10 @@ dist/
 .env
 
 ### TypeScript ###
-*.tsbuildinfo 
+*.tsbuildinfo
+
+### Prisma ###
+backend/src/generated/
 
 ### VS Code ###
 .vscode/
