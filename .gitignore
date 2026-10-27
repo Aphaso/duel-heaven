@@ -1,3 +1,15 @@
+### Dependencies ###
+node_modules/
+
+### Build ###
+dist/
+
+### Environment Variables ###
+.env
+
+### TypeScript ###
+*.tsbuildinfo 
+
 ### VS Code ###
 .vscode/
 
