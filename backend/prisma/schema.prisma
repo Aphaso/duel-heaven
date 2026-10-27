@@ -14,17 +14,21 @@ datasource db {
 }
 
 model Card {
-  id        Int      @id
-  name      String
-  type      String
-  frameType String?
-  desc      String   @db.Text
-  atk       Int?
-  def       Int?
-  level     Int?
-  race      String?
-  attribute String?
-  archetype String?
+  id            Int      @id
+  name          String
+  type          String
+  frameType     String?
+  desc          String   @db.Text
+  atk           Int?
+  def           Int?
+  level         Int?
+  race          String?
+  attribute     String?
+  archetype     String?
+  // Source addresses on YGOPRODeck just to download the images
+  // NO HOTLINKING, CAN'T BE USED AS DIRECT SOURCES (risk of IP block from the API)
+  imageUrl      String?
+  imageSmallUrl String?
   updatedAt DateTime @updatedAt
 
   @@index([name])

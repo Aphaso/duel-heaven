@@ -16,6 +16,7 @@ interface ApiCard {
     race?: string;
     attribute?: string;
     archetype?: string;
+    card_images?: { id: number; image_url?: string; image_url_small?: string } [];
 }
 
 @Injectable()
@@ -65,6 +66,8 @@ export class CardsSyncService {
             race: card.race ?? null,
             attribute: card.attribute ?? null,
             archetype: card.archetype ?? null,
+            imageUrl: card.card_images?.[0]?.image_url ?? null,
+            imageSmallUrl: card.card_images?.[0]?.image_url_small ?? null,
         };
     }
 }
