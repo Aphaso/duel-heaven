@@ -1,8 +1,7 @@
-import { Body, Controller, DefaultValuePipe, Get, Header, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
+import { Controller, DefaultValuePipe, Get, Header, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
 import { CardsService } from './cards.service';
 import { CardsSyncService } from './cards-sync.service';
 import { CardImagesService } from './card-images.service';
-import { CreateCardDto } from './create-card.dto';
 
 @Controller('cards')
 export class CardsController {
@@ -49,10 +48,5 @@ export class CardsController {
     @Get(':id')
     findOne(@Param('id', ParseIntPipe) id: number) {
         return this.cardsService.findOne(id);
-    }
-
-    @Post()
-    create(@Body() dto: CreateCardDto) {
-        return this.cardsService.create(dto);
     }
 }

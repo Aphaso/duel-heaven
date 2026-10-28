@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PrsimaModule } from './prisma/prisma.module';
 import { CardsModule } from './cards/cards.module';
 import { UsersModule } from './users/users.module';
+import { DecksModule } from './decks/decks.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { UsersModule } from './users/users.module';
     PrsimaModule,
     CardsModule,
     UsersModule,
+    DecksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

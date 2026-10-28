@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateCardDto } from './create-card.dto';
 
 @Injectable()
 export class CardsService {
@@ -33,9 +32,5 @@ export class CardsService {
             throw new NotFoundException(`Carta ${id} non trovata`);
         }
         return card;
-    }
-
-    create(dto: CreateCardDto) {
-        return this.prisma.card.create({ data: dto });
     }
 }
