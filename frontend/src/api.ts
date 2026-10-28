@@ -1,10 +1,44 @@
-import type { Card, Paginated } from './types';
+import type { Card, Deck, DeckDetail, Paginated } from './types';
+
+/** Generic call: handles backend errors and 204 responses (no-body response). */
+async function request<T>(url: string, init?: RequestInit): Promise<T> {
+    const res = await fetch(url, init);
+
+    if (!res.ok) {
+        let message = `Server Error: ${res.status}`;
+        try {
+            const body = await res.json();
+            // Nest returns `message` as text, or as a list (validation and rules).
+            message = Array.isArray(body.message)
+                ? body.message.join('\n')
+                : (body.message ?? message);
+        } catch {
+            // the body wasn't JSON, so we keep the generic message
+        }
+        throw new Error(message);
+    }
+
+    if (res.status === 204) {
+        return undefined as T;
+    }
+    return res.json();
+}
+
+function jsonBody(method: string, data: unknown): RequestInit {
+    return {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    };
+}
+
+/** ----------------------------------------------------------Handle Cards */
 
 export async function searchCards(params: {
     search: string;
     page: number;
     limit: number;
-}): Promise<Paginated<Card>> {
+}) {
     const query = new URLSearchParams({
         page: String(params.page),
         limit: String(params.limit),
@@ -12,14 +46,28 @@ export async function searchCards(params: {
     if (params.search) {
         query.set('search', params.search);
     }
-
-    const res = await fetch(`/api/cards?${query}`);
-    if (!res.ok) {
-        throw new Error(`Errore dal server: ${res.status}`);
-    }
-    return res.json();
+    return request<Paginated<Card>>(`/api/cards?${query}`);
 }
 
+// Card image address, provided by the backend
 export function cardImageUrl(id: number) {
     return `/api/cards/${id}/image`;
+}
+
+/** ----------------------------------------------------------Handle Decks */
+
+export function listDecks() {
+    return request<Deck[]>('/api/decks');
+}
+
+export function getDeck(id: string) {
+    return request<DeckDetail>(`/api/decks/${id}`);
+}
+
+export function createDeck(data: { name: string, archetype?: string }) {
+    return request<Deck>('/api/decks', jsonBody('POST', data));
+}
+
+export function deleteDeck(id: string) {
+    return request<void>(`/api/decks/${id}`, { method: 'DELETE' });
 }
