@@ -1,7 +1,9 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseEnumPipe, ParseIntPipe, Patch, Post, Put, Query } from '@nestjs/common';
+import { DeckSection } from '../generated/prisma/enums';
+import { DecksService } from './decks.service';
 import { CreateDeckDto } from './create-deck.dto';
 import { UpdateDeckDto } from './update-deck.dto';
-import { DecksService } from './decks.service';
+import { SetDeckCardDto } from './set-deck-card.dto';
 
 @Controller('decks')
 export class DecksController {
@@ -31,5 +33,19 @@ export class DecksController {
     @HttpCode(HttpStatus.NO_CONTENT)
     remove(@Param('id') id: string) {
         return this.decksService.remove(id);
+    }
+
+    @Put(':id/cards')
+    setCard(@Param('id') id: string, @Body() dto: SetDeckCardDto) {
+        return this.decksService.setCard(id, dto);
+    }
+
+    @Delete(':id/cards/:cardId')
+    removeCard(
+        @Param('id') id: string,
+        @Param('cardId', ParseIntPipe) cardId: number,
+        @Query('section', new ParseEnumPipe(DeckSection)) section: DeckSection,
+    ) {
+        return this.decksService.removeCard(id, cardId, section);
     }
 }
