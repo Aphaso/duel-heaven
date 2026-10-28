@@ -31,5 +31,52 @@ model Card {
   imageSmallUrl String?
   updatedAt DateTime @updatedAt
 
+  deckCards DeckCard[]
+
   @@index([name])
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String?  @unique
+  username    String?  @unique
+  displayName String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  decks Deck[]
+}
+
+enum DeckSection {
+  MAIN
+  EXTRA
+  SIDE
+}
+
+model Deck {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String
+  archetype   String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cards DeckCard[]
+
+  @@index([ownerId])
+}
+
+model DeckCard {
+  id       String      @id @default(cuid())
+  deckId   String
+  deck     Deck        @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  cardId   Int
+  card     Card        @relation(fields: [cardId], references: [id])
+  section  DeckSection
+  quantity Int         @default(1)
+
+  @@unique([deckId, cardId, section])
+  @@index([deckId])
 }
