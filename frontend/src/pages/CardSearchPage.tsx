@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { searchCards } from '../api';
 import CardTile from '../components/CardTile';
 import { useDebounce } from '../hooks/useDebounce';
+import Pagination from '../components/Pagination';
 
 const PAGE_SIZE = 24;
 
@@ -49,19 +50,7 @@ export default function CardSearchPage() {
                         </div>
                     )}
 
-                    {data.totalPages > 1 && (
-                        <nav className='mt-6 flex items-center justify-center gap-4'>
-                            <button onClick={() => goToPage(page - 1)} disabled={page <= 1} className='rounded border border-gray-300 px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40'>
-                                Previous
-                            </button>
-                            <span className='text-sm'>
-                                Page {data.page} of {data.totalPages}
-                            </span>
-                            <button onClick={() => goToPage(page + 1)} disabled={page >= data.totalPages} className='rounded border border-gray-300 px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40'>
-                                Next
-                            </button>
-                        </nav>
-                    )}
+                    <Pagination page={page} totalPages={data.totalPages} onChange={goToPage}></Pagination>
                 </>
             )}
         </main>

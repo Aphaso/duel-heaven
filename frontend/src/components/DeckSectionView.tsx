@@ -41,23 +41,39 @@ export default function DeckSectionView({
             {entries.length === 0 ? (
                 <p className='mt-2 text-sm text-gray-500'>No Cards.</p>
             ) : (
-                <div className='mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5'>
+                <div className='mt-3 flex flex-wrap gap-3'>
                     {entries.map((entry) => (
-                        <div key={entry.id}>
-                            <div className='relative'>
-                                <CardTile card={entry.card}></CardTile>
-                                <span className='absolute right-1 top-1 rounded bg-black/70 px-1.5 text-xs font-bold text-white'>
-                                    ✕{entry.quantity}
-                                </span>
+                        <div key={entry.id} className='rounded bg-gray-50 p-1.5'>
+                            <div className='flex gap-1'>
+                                {Array.from({ length: entry.quantity }, (_, i) => (
+                                    <div key={i} className='w-20 sm:w-24'>
+                                        <CardTile card={entry.card}></CardTile>
+                                    </div>
+                                ))}
                             </div>
                             <div className='mt-1 flex justify-center gap-1'>
-                                <button className={smallButton} disabled={busy} aria-label={`Removed one copy of ${entry.card.name}`} onClick={() => onChange(entry.cardId, entry.quantity - 1)}>
+                                <button
+                                    className={smallButton}
+                                    disabled={busy}
+                                    aria-label={`Removed one copy of ${entry.card.name}`}
+                                    onClick={() => onChange(entry.cardId, entry.quantity - 1)}
+                                >
                                     -
                                 </button>
-                                <button className={smallButton} disabled={busy || (copiesByCard[entry.cardId] ?? 0) >= maxCopies} aria-label={`Added one copy of ${entry.card.name}`} onClick={() => onChange(entry.cardId, entry.quantity + 1)}>
+                                <button
+                                    className={smallButton}
+                                    disabled={busy || (copiesByCard[entry.cardId] ?? 0) >= maxCopies}
+                                    aria-label={`Added one copy of ${entry.card.name}`}
+                                    onClick={() => onChange(entry.cardId, entry.quantity + 1)}
+                                >
                                     +
                                 </button>
-                                <button className={`${smallButton} text-red-700`} disabled={busy} aria-label={`Remove ${entry.card.name}`} onClick={() => onChange(entry.cardId, 0)}>
+                                <button
+                                    className={`${smallButton} text-red-700`}
+                                    disabled={busy}
+                                    aria-label={`Remove ${entry.card.name}`}
+                                    onClick={() => onChange(entry.cardId, 0)}
+                                >
                                     ✕
                                 </button>
                             </div>
