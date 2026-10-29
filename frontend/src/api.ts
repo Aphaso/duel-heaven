@@ -1,4 +1,4 @@
-import type { Card, Deck, DeckDetail, Paginated } from './types';
+import type { Card, Deck, DeckDetail, DeckSection, Paginated } from './types';
 
 /** Generic call: handles backend errors and 204 responses (no-body response). */
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -70,4 +70,24 @@ export function createDeck(data: { name: string, archetype?: string }) {
 
 export function deleteDeck(id: string) {
     return request<void>(`/api/decks/${id}`, { method: 'DELETE' });
+}
+
+/** -----------------------------------------------------------Handle Deck */
+
+export function setDeckCard(
+    deckId: string,
+    data: { cardId: number; section: DeckSection; quantity: number }
+) {
+    return request<DeckDetail>(`/api/decks/${deckId}/cards`, jsonBody('PUT', data));
+}
+
+export function removeDeckCard(
+    deckId: string,
+    cardId: number,
+    section: DeckSection,
+) {
+    return request<DeckDetail>(
+        `/api/decks/${deckId}/cards/${cardId}?section=${section}`,
+        { method: 'DELETE'},
+    );
 }
