@@ -26,6 +26,21 @@ const SECTION_LABEL: Record<DeckSection, string> = {
     SIDE: 'Side Deck',
 };
 
+const EXTRA_DECK_FRAMES = new Set([
+    'fusion',
+    'synchro',
+    'xyz',
+    'link',
+    'fusion_pendulum',
+    'synchro_pendulum',
+    'xyz_pendulum',
+]);
+
+export interface CardInfo {
+    name: string;
+    frameType: string | null;
+}
+
 function countBySection(entries: DeckEntry[]): Record<DeckSection, number> {
     const counts: Record<DeckSection, number> = { MAIN: 0, EXTRA: 0, SIDE: 0 };
     for (const e of entries) {
@@ -37,27 +52,40 @@ function countBySection(entries: DeckEntry[]): Record<DeckSection, number> {
 /* Controls on modification, limiting the max number of copies and the max number for each section.
    Verifies the state that would result by applying `change` to the deck.
    Only check the target section and card, since the rest is already valid.
+   Also prevents the user from putting Extra Deck monsters in the Main Deck and Main Deck cards in the Extra Deck.
 */
 export function checkChange(
     entries: DeckEntry[],
     change: DeckEntry,
-    cardName: string,
+    card: CardInfo,
 ): string[] {
+    const errors: string[] = [];
+
+    // Doesn't block if it doesn't know the card frameType
+    if (card.frameType !== null) {
+        const isExtraDeckCard = EXTRA_DECK_FRAMES.has(card.frameType);
+        if (change.section === 'EXTRA' && !isExtraDeckCard) {
+            errors.push(`${card.name} is not an Extra Deck Monster Card.`);
+        }
+        if (change.section === 'MAIN' && isExtraDeckCard) {
+            errors.push(`${card.name} is an Extra Deck Monster`);
+        }
+    }
+
     const others = entries.filter(
         (e) => !(e.cardId === change.cardId && e.section === change.section),
     );
     const next = [...others, change];
-    const errors: string[] = [];
 
     const counts = countBySection(next);
     const max = SECTION_MAX[change.section];
     if (counts[change.section] > max) {
-        errors.push(`${SECTION_LABEL[change.section]}: max ${max} cards (with this change the number would be ${counts[change.section]})`,);
+        errors.push(`${SECTION_LABEL[change.section]}: maximum ${max} cards.`);
     }
 
     const copies = next.filter((e) => e.cardId === change.cardId).reduce((sum, e) => sum + e.quantity, 0);
     if (copies > DECK_RULES.maxCopies) {
-        errors.push(`${cardName}: max ${DECK_RULES.maxCopies} total copies between Main Deck, Extra Deck and Side Deck (with this change the number would be ${copies})`,);
+        errors.push(`${card.name}: maximum ${DECK_RULES.maxCopies} total copies between Main Deck, Extra Deck and Side Deck.`);
     }
 
     return errors;

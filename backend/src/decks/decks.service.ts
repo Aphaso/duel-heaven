@@ -56,7 +56,7 @@ export class DecksService {
 
         const card = await this.prisma.card.findUnique({
             where: { id: dto.cardId },
-            select: { id: true, name: true },
+            select: { id: true, name: true, frameType: true },
         });
         if (!card) {
             throw new NotFoundException(`Card ${dto.cardId} not found`);
@@ -67,7 +67,7 @@ export class DecksService {
             select: { cardId: true, section: true, quantity: true },
         });
 
-        const errors = checkChange(entries, dto, card.name);
+        const errors = checkChange(entries, dto, card);
         if (errors.length > 0) {
             throw new BadRequestException(errors);
         }
