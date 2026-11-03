@@ -16,11 +16,13 @@ const EXTRA_DECK_FRAMES = [
     'xyz_pendulum',
 ];
 
+export function isExtraDeckCard(card: Card): boolean {
+    return card.frameType !== null && EXTRA_DECK_FRAMES.includes(card.frameType);
+}
+
 export function allowedSections(card: Card): DeckSection[] {
     if (card.frameType === null) {
         return ['MAIN', 'EXTRA', 'SIDE'];
     }
-    return EXTRA_DECK_FRAMES.includes(card.frameType)
-        ? ['EXTRA', 'SIDE']
-        : ['MAIN', 'SIDE'];
+    return isExtraDeckCard(card) ? ['EXTRA', 'SIDE'] : ['MAIN', 'SIDE'];
 }

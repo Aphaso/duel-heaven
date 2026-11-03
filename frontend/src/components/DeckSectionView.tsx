@@ -1,31 +1,31 @@
-import type { DraftEntry } from '../draft';
-import type { Card } from '../types';
-import CardTile from './CardTile';
+import { CATEGORY_LABEL, type Block } from '../draft';
+import type { Card, DeckSection } from '../types';
+import CardBlock from './CardBlock';
 
 interface Props {
+    section: DeckSection;
     title: string;
-    entries: DraftEntry[];
+    blocks: Block[];
     count: number;
     min?: number;
     max: number;
-    maxCopies: number;
-    copiesByCard: Record<number, number>;
+    canAddCopy: (card: Card) => boolean;
     busy: boolean;
     onChange: (card: Card, quantity: number) => void;
+    onReorder: (fromKey: string, toKey: string) => void;
 }
 
-const smallButton = 'rounded border border-gra-300 px-2 text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40';
-
 export default function DeckSectionView({
+    section,
     title,
-    entries,
+    blocks,
     count,
     min,
     max,
-    maxCopies,
-    copiesByCard,
+    canAddCopy,
     busy,
     onChange,
+    onReorder,
 }: Props) {
     const belowMin = min !== undefined && count < min;
 
@@ -39,33 +39,21 @@ export default function DeckSectionView({
                 </span>
             </h2>
 
-            {entries.length === 0 ? (
+            {blocks.length === 0 ? (
                 <p className='mt-2 text-sm text-gray-500'>No Cards.</p>
             ) : (
-                <div className='mt-3 flex flex-wrap gap-3'>
-                    {entries.map((entry) => (
-                        <div key={entry.card.id} className='rounded bg-gray-50 p-1.5'>
-                            <div className='flex gap-1'>
-                                {Array.from({ length: entry.quantity }, (_, i) => (
-                                    <div key={i} className='w-20 sm:w-24'>
-                                        <CardTile card={entry.card}></CardTile>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className='mt-1 flex justify-center gap-1'>
-                                <button className={smallButton} disabled={busy} aria-label={`Removed one copy of ${entry.card.name}`} onClick={() => onChange(entry.card, entry.quantity - 1)}>
-                                    -
-                                </button>
-                                <button className={smallButton} disabled={busy || count >= max || (copiesByCard[entry.card.id] ?? 0) >= maxCopies} aria-label={`Added one copy of ${entry.card.name}`} onClick={() => onChange(entry.card, entry.quantity + 1)}>
-                                    +
-                                </button>
-                                <button className={`${smallButton} text-red-700`} disabled={busy} aria-label={`Removed ${entry.card.name}`} onClick={() => onChange(entry.card, 0)}>
-                                    ✕
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                blocks.map((block) => (
+                    <div key={block.category} className='mt-3'>
+                        {/* No label for the Extra Deck */}
+                        {section !== 'EXTRA' && (
+                            <p className='mb-1 text-xs font-medium- uppercase tracking-wide text-gray-500'>
+                                {CATEGORY_LABEL[block.category]}
+                            </p>
+                        )}
+                        <CardBlock entries={block.entries} busy={busy} canAddCopy={canAddCopy} onChange={onChange} onReorder={onReorder}>
+                        </CardBlock>
+                    </div>
+                ))
             )}
         </section>
     );

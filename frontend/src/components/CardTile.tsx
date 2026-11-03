@@ -12,7 +12,7 @@ export default function CardTile({ card }: { card: Card }) {
                     {card.name}
                 </div>
             ) : (
-                <img src={cardImageUrl(card.id)} alt={card.name} loading='lazy' onError={() => setFailed(true)} className='h-full w-full object-cover'></img>
+                <img src={cardImageUrl(card.id)} alt={card.name} loading='lazy' draggable={false} onError={() => setFailed(true)} className='h-full w-full object-cover'></img>
             )}
         </div>
     );

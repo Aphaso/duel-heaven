@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, NavLink, Route, Routes } from 'react-router';
+import { createBrowserRouter, Navigate, NavLink, Outlet, RouterProvider } from 'react-router';
 import CardSearchPage from './pages/CardSearchPage';
 import DeckPage from './pages/DeckPage';
 import DecksPage from './pages/DecksPage';
@@ -9,9 +9,10 @@ function navClass({ isActive }: { isActive: boolean }) {
     : 'text-gray-600 hover:text-gray-900';
 }
 
-export default function App() {
+/** Bar on top + point where the page chosen by the router is shown. */
+function Layout() {
   return (
-    <BrowserRouter>
+    <>
       <header className='border-b border-gray-200'>
         <nav className='mx-auto flex max-w-6xl items-center gap-6 px-8 py-3'>
           <span className='font-bold'>Duel Heaven</span>
@@ -19,14 +20,24 @@ export default function App() {
           <NavLink to='/decks' className={navClass}>Decks</NavLink>
         </nav>
       </header>
-
-      <Routes>
-        <Route path='/' element={<Navigate to ="/cards" replace></Navigate>}></Route>
-        <Route path='/cards' element={<CardSearchPage></CardSearchPage>}></Route>
-        <Route path='/decks' element={<DecksPage></DecksPage>}></Route>
-        <Route path='/decks/:id' element={<DeckPage></DeckPage>}></Route>
-        <Route path='*' element={<p className='p-8'></p>}>Page Not Found.</Route>
-      </Routes>
-    </BrowserRouter>
+      <Outlet></Outlet>
+    </>
   );
+}
+
+const router = createBrowserRouter([
+  {
+    element: <Layout></Layout>,
+    children: [
+      { path: '/', element: <Navigate to='/cards' replace></Navigate> },
+      { path: '/cards', element: <CardSearchPage></CardSearchPage> },
+      { path: '/decks', element: <DecksPage></DecksPage> },
+      { path: '/decks/:id', element: <DeckPage></DeckPage> },
+      { path: '*', element: <p className='p-8'>Page Not Found.</p>}
+    ],
+  },
+]);
+
+export default function App() {
+  return <RouterProvider router={router}></RouterProvider>;
 }

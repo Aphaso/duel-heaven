@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useBlocker } from 'react-router';
 import { saveDeckList } from '../api';
-import { isSameList, toDraft, withQuantity, type DraftEntry } from '../draft';
+import { blocksOf, isSameList, moveEntry, normalize, toDraft, withQuantity, type DraftEntry } from '../draft';
 import type { Card, DeckDetail, DeckSection } from '../types';
 import CardSearchPanel from './CardSearchPanel';
 import DeckSectionView from './DeckSectionView';
@@ -16,15 +17,16 @@ export default function DeckEditor({ deck }: { deck: DeckDetail }) {
     const queryClient = useQueryClient();
     const { limits } = deck.summary;
 
+    // The draft starts from what we have saved and from now on it only exists here
     const [draft, setDraft] = useState<DraftEntry[]>(() => toDraft(deck.cards));
-    const saved = toDraft(deck.cards);
-    const dirty = !isSameList(draft, saved);
+    const dirty = !isSameList(draft, toDraft(deck.cards));
 
     const save = useMutation({
+        // It is saved in the order in which the user sees the cards, using the position as the index
         mutationFn: () =>
             saveDeckList(
                 deck.id,
-                draft.map((e) => ({
+                normalize(draft).map((e) => ({
                     cardId: e.card.id,
                     section: e.section,
                     quantity: e.quantity,
@@ -36,6 +38,7 @@ export default function DeckEditor({ deck }: { deck: DeckDetail }) {
         },
     });
 
+    // Ask for confirmation before closing or refreshing the page while having unsaved changes
     useEffect(() => {
         if (!dirty) {
             return;
@@ -45,6 +48,20 @@ export default function DeckEditor({ deck }: { deck: DeckDetail }) {
         return () => window.removeEventListener('beforeunload', warn);
     }, [dirty]);
 
+    // Ask for confirmation before leaving with the app links (or the browser "Back") button
+    // while having unsaved changes
+    const blocker = useBlocker(dirty && !save.isPending);
+    useEffect(() => {
+        if (blocker.state === 'blocked') {
+            if (window.confirm('You have unsaved changes. Discard changes and leave?')) {
+                blocker.proceed();
+            } else {
+                blocker.reset();
+            }
+        }
+    }, [blocker]);
+
+    // Counters and copies calcolated based on the Draft
     const counts: Record<DeckSection, number> = { MAIN: 0, EXTRA: 0, SIDE: 0 };
     const copiesByCard: Record<number, number> = {};
     for (const e of draft) {
@@ -69,9 +86,14 @@ export default function DeckEditor({ deck }: { deck: DeckDetail }) {
 
     function canAdd(card: Card, section: DeckSection) {
         return (
-            (copiesByCard[card.id] ?? 0) < limits.maxCopies && 
+            (copiesByCard[card.id] ?? 0) < limits.maxCopies &&
             counts[section] < maxOf[section]
         );
+    }
+
+    function reorder(fromKey: string, toKey: string) {
+        save.reset();
+        setDraft((current) => moveEntry(current, fromKey, toKey));
     }
 
     function discard() {
@@ -82,20 +104,20 @@ export default function DeckEditor({ deck }: { deck: DeckDetail }) {
     const mainIncomplete = counts.MAIN < limits.mainMin;
 
     return (
-        <div className='mt-2 grid gap-8 lg:grid-cols-[1fr_22rem]'>
+        <div className='mt-2 grip gap-8 lg:grid-cols-[1fr_22rem]'>
             <div>
                 <h1 className='text-3xl font-bold'>{deck.name}</h1>
                 {deck.archetype && <p className='mt-1 text-gray-600'>{deck.archetype}</p>}
 
-                <div className='sticky top-0 z-10 -mx-2 mt-3 flex flex-wrap items-center gap-3 bg-white/90 px-2 py-3 backdrop-blur'>
-                    <button onClick={() => save.mutate()} disabled={!dirty || save.isPending} className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40'>
+                <div className='sticky top-0 z-20 -mx-2 mt-3 flex flex-wrap items-center gap-3 bg-white/90 px-2 py-3 backdrop-blur'>
+                    <button onClick={() => save.mutate()} disabled={!dirty || save.isPending} className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabeld:opacity-40'>
                         {save.isPending ? 'Saving...' : 'Save'}
                     </button>
                     <button onClick={discard} disabled={!dirty || save.isPending} className='rounded border border-gray-300 px-4 py-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40'>
-                        Discard changes
+                        Discard Changes
                     </button>
                     {dirty ? (
-                        <span className='text-sm test-amber-700'>Changes not saved</span>
+                        <span className='text-sm text-amber-700'>Unsaved Changes</span>
                     ) : (
                         <span className='text-sm text-gray-500'>Saved</span>
                     )}
@@ -103,7 +125,7 @@ export default function DeckEditor({ deck }: { deck: DeckDetail }) {
 
                 {mainIncomplete && (
                     <p className='mt-2 text-sm text-amber-700'>
-                        Incomplete Main Deck: {counts.MAIN}/{limits.mainMin} minimum cards
+                        Incomplete Main Deck: {counts.MAIN}/{limits.mainMin} cards
                     </p>
                 )}
 
@@ -117,15 +139,16 @@ export default function DeckEditor({ deck }: { deck: DeckDetail }) {
                     {SECTIONS.map(({ section, title }) => (
                         <DeckSectionView
                             key={section}
+                            section={section}
                             title={title}
-                            entries={draft.filter((e) => e.section === section).sort((a, b) => a.card.name.localeCompare(b.card.name))}
+                            blocks={blocksOf(draft, section)}
                             count={counts[section]}
                             min={section === 'MAIN' ? limits.mainMin : undefined}
                             max={maxOf[section]}
-                            maxCopies={limits.maxCopies}
-                            copiesByCard={copiesByCard}
+                            canAddCopy={(card) => canAdd(card, section)}
                             busy={save.isPending}
                             onChange={(card, quantity) => setQuantity(card, section, quantity)}
+                            onReorder={reorder}
                         >
                         </DeckSectionView>
                     ))}
@@ -133,7 +156,8 @@ export default function DeckEditor({ deck }: { deck: DeckDetail }) {
             </div>
 
             <aside className='lg:sticky lg:top-4 lg:self-start'>
-                <CardSearchPanel copiesByCard={copiesByCard} busy={save.isPending} canAdd={canAdd} onAdd={addCard}></CardSearchPanel>
+                <CardSearchPanel copiesByCard={copiesByCard} busy={save.isPending} canAdd={canAdd} onAdd={addCard}>
+                </CardSearchPanel>
             </aside>
         </div>
     );

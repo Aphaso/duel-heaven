@@ -23,7 +23,7 @@ export class DecksService {
             include: {
                 cards: {
                     include: { card: true },
-                    orderBy: [{ section: 'asc' }, { card: { name: 'asc' } }],
+                    orderBy: [{ position: 'asc'}, { id: 'asc' }],
                 },
             }
         });
@@ -72,11 +72,12 @@ export class DecksService {
         await this.prisma.$transaction([
             this.prisma.deckCard.deleteMany({ where: { deckId } }),
             this.prisma.deckCard.createMany({
-                data: dto.cards.map((c) => ({
+                data: dto.cards.map((c, index) => ({
                     deckId,
                     cardId: c.cardId,
                     section: c.section,
                     quantity: c.quantity,
+                    position: index,
                 })),
             }),
             this.prisma.deck.update({
