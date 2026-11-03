@@ -1,4 +1,4 @@
-import type { DeckSection } from '../generated/prisma/client';
+import type { Card, DeckSection } from '../generated/prisma/client';
 
 export const DECK_RULES = {
     mainMin: 40,
@@ -49,43 +49,52 @@ function countBySection(entries: DeckEntry[]): Record<DeckSection, number> {
     return counts;
 }
 
-/* Controls on modification, limiting the max number of copies and the max number for each section.
-   Verifies the state that would result by applying `change` to the deck.
-   Only check the target section and card, since the rest is already valid.
-   Also prevents the user from putting Extra Deck monsters in the Main Deck and Main Deck cards in the Extra Deck.
+/* Save blocking checks: duplicated entries, Extra Deck monsters in Main and Main cards in Extra,
+   section limit and copy limit.
+   Returns list of problems (if it's empty the deck list is valid).
 */
-export function checkChange(
+export function checkDeckList(
     entries: DeckEntry[],
-    change: DeckEntry,
-    card: CardInfo,
+    cards: Map<number, CardInfo>,
 ): string[] {
     const errors: string[] = [];
+    const nameOf = (id: number) => cards.get(id)?.name ?? `Card ${id}`;
 
-    // Doesn't block if it doesn't know the card frameType
-    if (card.frameType !== null) {
-        const isExtraDeckCard = EXTRA_DECK_FRAMES.has(card.frameType);
-        if (change.section === 'EXTRA' && !isExtraDeckCard) {
-            errors.push(`${card.name} is not an Extra Deck Monster Card.`);
+    const seen = new Set<string>();
+    const copies = new Map<number, number>();
+
+    for (const e of entries) {
+        const key = `${e.cardId}:${e.section}`;
+        if (seen.has(key)) {
+            errors.push(`${nameOf(e.cardId)}: appears multiple times in the ${SECTION_LABEL[e.section]}`);
         }
-        if (change.section === 'MAIN' && isExtraDeckCard) {
-            errors.push(`${card.name} is an Extra Deck Monster`);
+        seen.add(key);
+        copies.set(e.cardId, (copies.get(e.cardId) ?? 0) + e.quantity);
+
+        // Doesn't block if it doesn't know the card's frameType
+        const frameType = cards.get(e.cardId)?.frameType ?? null;
+        if (frameType !== null) {
+            const isExtraDeckCard = EXTRA_DECK_FRAMES.has(frameType);
+            if (e.section === 'EXTRA' && !isExtraDeckCard) {
+                errors.push(`${nameOf(e.cardId)}: is not an Extra Deck Monster`);
+            }
+            if (e.section === 'MAIN' && isExtraDeckCard){
+                errors.push(`${nameOf(e.cardId)}: is not a Main Deck Card`);
+            }
         }
     }
 
-    const others = entries.filter(
-        (e) => !(e.cardId === change.cardId && e.section === change.section),
-    );
-    const next = [...others, change];
-
-    const counts = countBySection(next);
-    const max = SECTION_MAX[change.section];
-    if (counts[change.section] > max) {
-        errors.push(`${SECTION_LABEL[change.section]}: maximum ${max} cards.`);
+    const counts = countBySection(entries);
+    for (const section of ['MAIN', 'EXTRA', 'SIDE'] as const) {
+        if (counts[section] > SECTION_MAX[section]) {
+            errors.push(`${SECTION_LABEL[section]}: ${SECTION_MAX[section]} cards maximum`);
+        }
     }
 
-    const copies = next.filter((e) => e.cardId === change.cardId).reduce((sum, e) => sum + e.quantity, 0);
-    if (copies > DECK_RULES.maxCopies) {
-        errors.push(`${card.name}: maximum ${DECK_RULES.maxCopies} total copies between Main Deck, Extra Deck and Side Deck.`);
+    for (const [cardId, total] of copies) {
+        if (total > DECK_RULES.maxCopies) {
+            errors.push(`${nameOf(cardId)}: ${DECK_RULES.maxCopies} copies maximum between Main Deck, Extra Deck and Side Deck`);
+        }
     }
 
     return errors;

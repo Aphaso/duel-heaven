@@ -17,15 +17,15 @@ const SECTION_LABELS: Record<DeckSection, string> = {
 
 interface Props {
     copiesByCard: Record<number, number>;
-    maxCopies: number;
     busy: boolean;
+    canAdd: (card: Card, section: DeckSection) => boolean;
     onAdd: (card: Card, section: DeckSection) => void;
 }
 
 export default function CardSearchPanel({
     copiesByCard,
-    maxCopies,
     busy,
+    canAdd,
     onAdd,
 }: Props) {
     const [text, setText] = useState('');
@@ -70,7 +70,7 @@ export default function CardSearchPanel({
                                         <p className='truncate text-xs text-gray-500'>{card.type}</p>
                                         <div>
                                             {allowedSections(card).map((section) => (
-                                                <button key={section} onClick={() => onAdd(card, section)} disabled={busy || copies >= maxCopies} className='rounded border border-gray-300 px-2 py-0.5 text-xs hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40'>
+                                                <button key={section} onClick={() => onAdd(card, section)} disabled={busy || !canAdd(card, section)} className='rounded border border-gray-300 px-2 py-0.5 text-xs hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40'>
                                                     + {SECTION_LABELS[section]}
                                                 </button>
                                             ))}

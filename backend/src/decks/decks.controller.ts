@@ -1,9 +1,8 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseEnumPipe, ParseIntPipe, Patch, Post, Put, Query } from '@nestjs/common';
-import { DeckSection } from '../generated/prisma/enums';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put } from '@nestjs/common';
 import { DecksService } from './decks.service';
 import { CreateDeckDto } from './create-deck.dto';
 import { UpdateDeckDto } from './update-deck.dto';
-import { SetDeckCardDto } from './set-deck-card.dto';
+import { SaveDeckListDto } from './save-deck-list.dto';
 
 @Controller('decks')
 export class DecksController {
@@ -35,17 +34,8 @@ export class DecksController {
         return this.decksService.remove(id);
     }
 
-    @Put(':id/cards')
-    setCard(@Param('id') id: string, @Body() dto: SetDeckCardDto) {
-        return this.decksService.setCard(id, dto);
-    }
-
-    @Delete(':id/cards/:cardId')
-    removeCard(
-        @Param('id') id: string,
-        @Param('cardId', ParseIntPipe) cardId: number,
-        @Query('section', new ParseEnumPipe(DeckSection)) section: DeckSection,
-    ) {
-        return this.decksService.removeCard(id, cardId, section);
+    @Put(':id/list')
+    saveList(@Param('id') id: string, @Body() dto: SaveDeckListDto) {
+        return this.decksService.saveList(id, dto);
     }
 }

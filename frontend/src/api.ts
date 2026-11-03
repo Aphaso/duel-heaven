@@ -74,20 +74,12 @@ export function deleteDeck(id: string) {
 
 /** -----------------------------------------------------------Handle Deck */
 
-export function setDeckCard(
+export function saveDeckList(
     deckId: string,
-    data: { cardId: number; section: DeckSection; quantity: number }
-) {
-    return request<DeckDetail>(`/api/decks/${deckId}/cards`, jsonBody('PUT', data));
-}
-
-export function removeDeckCard(
-    deckId: string,
-    cardId: number,
-    section: DeckSection,
+    cards: { cardId: number; section: DeckSection; quantity: number }[],
 ) {
     return request<DeckDetail>(
-        `/api/decks/${deckId}/cards/${cardId}?section=${section}`,
-        { method: 'DELETE'},
+        `/api/decks/${deckId}/list`,
+        jsonBody('PUT', { cards })
     );
 }
