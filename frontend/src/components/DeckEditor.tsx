@@ -104,13 +104,13 @@ export default function DeckEditor({ deck }: { deck: DeckDetail }) {
     const mainIncomplete = counts.MAIN < limits.mainMin;
 
     return (
-        <div className='mt-2 grip gap-8 lg:grid-cols-[1fr_22rem]'>
+        <div className='mt-2 grid gap-8 lg:grid-cols-[1fr_22rem]'>
             <div>
                 <h1 className='text-3xl font-bold'>{deck.name}</h1>
                 {deck.archetype && <p className='mt-1 text-gray-600'>{deck.archetype}</p>}
 
                 <div className='sticky top-0 z-20 -mx-2 mt-3 flex flex-wrap items-center gap-3 bg-white/90 px-2 py-3 backdrop-blur'>
-                    <button onClick={() => save.mutate()} disabled={!dirty || save.isPending} className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabeld:opacity-40'>
+                    <button onClick={() => save.mutate()} disabled={!dirty || save.isPending} className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40'>
                         {save.isPending ? 'Saving...' : 'Save'}
                     </button>
                     <button onClick={discard} disabled={!dirty || save.isPending} className='rounded border border-gray-300 px-4 py-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40'>
