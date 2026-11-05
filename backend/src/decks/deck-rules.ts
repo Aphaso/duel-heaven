@@ -36,6 +36,10 @@ const EXTRA_DECK_FRAMES = new Set([
     'xyz_pendulum',
 ]);
 
+export function isExtraDeckFrame(frameType: string | null): boolean {
+    return frameType !== null && EXTRA_DECK_FRAMES.has(frameType);
+}
+
 export interface CardInfo {
     name: string;
     frameType: string | null;

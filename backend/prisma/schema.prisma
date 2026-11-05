@@ -32,6 +32,7 @@ model Card {
   updatedAt DateTime @updatedAt
 
   deckCards DeckCard[]
+  sidePatternCards SidePatternCard[]
 
   @@index([name])
 }
@@ -64,6 +65,7 @@ model Deck {
   updatedAt   DateTime @updatedAt
 
   cards DeckCard[]
+  sidePatterns SidePattern[]
 
   @@index([ownerId])
 }
@@ -80,4 +82,40 @@ model DeckCard {
 
   @@unique([deckId, cardId, section])
   @@index([deckId])
+}
+
+enum SwapDirection {
+  OUT
+  IN
+}
+
+// "Against deck X: take these cards out and put these cards in."
+model SidePattern {
+  id               String   @id @default(cuid())
+  deckId           String
+  deck             Deck     @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  opponentDeckName String
+  notes            String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  cards SidePatternCard[]
+
+  @@unique([deckId, opponentDeckName])
+  @@index([deckId])
+}
+
+model SidePatternCard {
+  id            String        @id @default(cuid())
+  sidePatternId String
+  SidePattern   SidePattern   @relation(fields: [sidePatternId], references: [id], onDelete: Cascade)
+  cardId        Int
+  card          Card          @relation(fields: [cardId], references: [id])
+  direction     SwapDirection
+  quantity      Int           @default(1)
+  // Display order inside its own list
+  position      Int           @default(0)
+
+  @@unique([sidePatternId, cardId, direction])
+  @@index([sidePatternId])
 }

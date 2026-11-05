@@ -6,6 +6,7 @@ import { PrsimaModule } from './prisma/prisma.module';
 import { CardsModule } from './cards/cards.module';
 import { UsersModule } from './users/users.module';
 import { DecksModule } from './decks/decks.module';
+import { SidePatternsModule } from './side-patterns/side-patterns.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { DecksModule } from './decks/decks.module';
     CardsModule,
     UsersModule,
     DecksModule,
+    SidePatternsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
