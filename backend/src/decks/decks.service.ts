@@ -42,6 +42,7 @@ export class DecksService {
     async update(id: string, dto: UpdateDeckDto) {
         await this.assertOwned(id);
         await this.prisma.deck.update({ where: { id }, data: dto });
+        return this.findOne(id);
     }
 
     async remove(id: string) {

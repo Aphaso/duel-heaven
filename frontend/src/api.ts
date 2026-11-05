@@ -68,6 +68,10 @@ export function createDeck(data: { name: string, archetype?: string }) {
     return request<Deck>('/api/decks', jsonBody('POST', data));
 }
 
+export function updateDeck(id: string, data: { name?: string; archetype?: string | null }) {
+    return request<DeckDetail>(`/api/decks/${id}`, jsonBody('PATCH', data));
+}
+
 export function deleteDeck(id: string) {
     return request<void>(`/api/decks/${id}`, { method: 'DELETE' });
 }

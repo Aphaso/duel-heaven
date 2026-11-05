@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsEnum, IsIn, IsInt, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsEnum, IsInt, Max, Min, ValidateNested } from 'class-validator';
 import { DeckSection } from '../generated/prisma/enums';
 import { DECK_RULES } from './deck-rules';
 
