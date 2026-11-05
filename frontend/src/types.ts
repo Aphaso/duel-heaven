@@ -56,3 +56,24 @@ export interface DeckDetail extends Deck {
     cards: DeckCardEntry[];
     summary: DeckSummary;
 }
+
+export interface SidePatternCard {
+    id: string;
+    cardId: number;
+    quantity: number;
+    position: number;
+    direction: 'OUT' | 'IN';
+    card: Card;
+}
+
+export interface SidePattern {
+    id: string;
+    deckId: string;
+    opponentDeckName: string;
+    notes: string | null;
+    createdAt: string;
+    updatedAt: string;
+    cardsOut: SidePatternCard[];
+    cardsIn: SidePatternCard[];
+    issues: string[];
+}

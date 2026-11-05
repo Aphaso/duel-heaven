@@ -1,4 +1,4 @@
-import type { Card, Deck, DeckDetail, DeckSection, Paginated } from './types';
+import type { Card, Deck, DeckDetail, DeckSection, Paginated, SidePattern } from './types';
 
 /** Generic call: handles backend errors and 204 responses (no-body response). */
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -32,7 +32,7 @@ function jsonBody(method: string, data: unknown): RequestInit {
     };
 }
 
-/** ----------------------------------------------------------Handle Cards */
+/** ---------------------------------------------------------- Handle Cards */
 
 export async function searchCards(params: {
     search: string;
@@ -54,7 +54,7 @@ export function cardImageUrl(id: number) {
     return `/api/cards/${id}/image`;
 }
 
-/** ----------------------------------------------------------Handle Decks */
+/** ---------------------------------------------------------- Handle Decks */
 
 export function listDecks() {
     return request<Deck[]>('/api/decks');
@@ -76,7 +76,7 @@ export function deleteDeck(id: string) {
     return request<void>(`/api/decks/${id}`, { method: 'DELETE' });
 }
 
-/** -----------------------------------------------------------Handle Deck */
+/** ----------------------------------------------------------- Handle Deck */
 
 export function saveDeckList(
     deckId: string,
@@ -86,4 +86,14 @@ export function saveDeckList(
         `/api/decks/${deckId}/list`,
         jsonBody('PUT', { cards })
     );
+}
+
+/** --------------------------------------------------------- Side Patterns */
+
+export function listSidePatterns(deckId: string) {
+    return request<SidePattern[]>(`/api/decks/${deckId}/side-patterns`);
+}
+
+export function deleteSidePattern(deckId: string, id: string) {
+    return request<void>(`/api/decks/${deckId}/side-patterns/${id}`, { method: 'DELETE' });
 }
