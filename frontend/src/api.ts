@@ -1,4 +1,4 @@
-import type { Card, Deck, DeckDetail, DeckSection, Paginated, SidePattern } from './types';
+import type { Card, Deck, DeckDetail, DeckSection, Paginated, SidePattern, SidePatternPayload } from './types';
 
 /** Generic call: handles backend errors and 204 responses (no-body response). */
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -92,6 +92,14 @@ export function saveDeckList(
 
 export function listSidePatterns(deckId: string) {
     return request<SidePattern[]>(`/api/decks/${deckId}/side-patterns`);
+}
+
+export function createSidePattern(deckId: string, data: SidePatternPayload) {
+    return request<SidePattern>(`/api/decks/${deckId}/side-patterns`, jsonBody('POST', data));
+}
+
+export function updateSidePattern(deckId: string, id: string, data: SidePatternPayload) {
+    return request<SidePattern>(`/api/decks/${deckId}/side-patterns/${id}`, jsonBody('PUT', data));
 }
 
 export function deleteSidePattern(deckId: string, id: string) {

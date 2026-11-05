@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
 import { Link, useParams } from 'react-router';
 import { getDeck } from '../api';
 import DeckDetailsForm from '../components/DeckDetailsForm';
@@ -16,6 +17,27 @@ const TABS: { id: Tab; label: string }[] = [
 export default function DeckPage() {
     const { id } = useParams<{ id: string }>();
     const [tab, setTab] = useState<Tab>('decklist');
+
+    const [listDirty, setListDirty] = useState(false);
+    const [patternDirty, setPatternDirty] = useState(false);
+
+    // The page navigation guard
+    useUnsavedChangesGuard(listDirty || patternDirty);
+
+    function selectTab(next: Tab) {
+        if (next === tab) {
+            return;
+        }
+
+        /**
+         * The Decklist editor stays mounted even if hidden, so the draft survives a tab change.
+         * The Side Pattern editor is unmounted on leave, so we ask first.
+         */
+        if (patternDirty && !window.confirm('Discard changes to this Side Pattern?')) {
+            return;
+        }
+        setTab(next);
+    }
 
     const deck = useQuery({
         queryKey: ['deck', id],
@@ -44,7 +66,7 @@ export default function DeckPage() {
                                 key={t.id}
                                 role='tab'
                                 aria-selected={tab === t.id}
-                                onClick={() => setTab(t.id)}
+                                onClick={() => selectTab(t.id)}
                                 className={`-mb-px border-b-2 px-4 py-2 text-sm ${
                                     tab === t.id
                                         ? 'border-blue-600 font-semibold text-blue-700'
@@ -58,12 +80,12 @@ export default function DeckPage() {
 
                     {/* The editor stays mounted but hidden: unmounting it would throw away the unsaved draft */}
                     <div role='tabpanel' className={tab === 'decklist' ? '' : 'hidden'}>
-                        <DeckEditor key={deck.data.id} deck={deck.data}></DeckEditor>
+                        <DeckEditor key={deck.data.id} deck={deck.data} onDirtyChange={setListDirty}></DeckEditor>
                     </div>
 
                     {tab === 'side-patterns' && (
                         <div role='tabpanel'>
-                            <SidePatternsPanel key={deck.data.id} deck={deck.data}></SidePatternsPanel>
+                            <SidePatternsPanel key={deck.data.id} deck={deck.data} decklistDirty={listDirty} onDirtyChange={setPatternDirty}></SidePatternsPanel>
                         </div>
                     )}
                 </>

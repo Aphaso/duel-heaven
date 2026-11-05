@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useBlocker } from 'react-router';
 import { saveDeckList } from '../api';
 import { blocksOf, isSameList, moveEntry, normalize, toDraft, withQuantity, type DraftEntry } from '../draft';
 import type { Card, DeckDetail, DeckSection } from '../types';
@@ -13,7 +12,12 @@ const SECTIONS: { section: DeckSection; title: string }[] = [
     { section: 'SIDE', title: 'Side Deck' },
 ];
 
-export default function DeckEditor({ deck }: { deck: DeckDetail }) {
+interface Props {
+    deck: DeckDetail;
+    onDirtyChange: (dirty: boolean) => void;
+}
+
+export default function DeckEditor({ deck, onDirtyChange }: Props) {
     const queryClient = useQueryClient();
     const { limits } = deck.summary;
 
@@ -38,28 +42,11 @@ export default function DeckEditor({ deck }: { deck: DeckDetail }) {
         },
     });
 
-    // Ask for confirmation before closing or refreshing the page while having unsaved changes
+    const unsaved = dirty && !save.isPending;
     useEffect(() => {
-        if (!dirty) {
-            return;
-        }
-        const warn = (e: BeforeUnloadEvent) => e.preventDefault();
-        window.addEventListener('beforeunload', warn);
-        return () => window.removeEventListener('beforeunload', warn);
-    }, [dirty]);
-
-    // Ask for confirmation before leaving with the app links (or the browser "Back") button
-    // while having unsaved changes
-    const blocker = useBlocker(dirty && !save.isPending);
-    useEffect(() => {
-        if (blocker.state === 'blocked') {
-            if (window.confirm('You have unsaved changes. Discard changes and leave?')) {
-                blocker.proceed();
-            } else {
-                blocker.reset();
-            }
-        }
-    }, [blocker]);
+        onDirtyChange(unsaved);
+        return () => onDirtyChange(false);
+    }, [unsaved, onDirtyChange]);
 
     // Counters and copies calcolated based on the Draft
     const counts: Record<DeckSection, number> = { MAIN: 0, EXTRA: 0, SIDE: 0 };

@@ -77,3 +77,10 @@ export interface SidePattern {
     cardsIn: SidePatternCard[];
     issues: string[];
 }
+
+export interface SidePatternPayload {
+    opponentDeckName: string;
+    notes: string | null;
+    cardsOut: { cardId: number; quantity: number }[];
+    cardsIn: { cardId: number; quantity: number }[];
+}
