@@ -2,6 +2,8 @@ import { createBrowserRouter, Navigate, NavLink, Outlet, RouterProvider } from '
 import CardSearchPage from './pages/CardSearchPage';
 import DeckPage from './pages/DeckPage';
 import DecksPage from './pages/DecksPage';
+import WthListPage from './pages/WthListPage';
+import WthGuidePage from './pages/WthGuidePage';
 
 function navClass({ isActive }: { isActive: boolean }) {
   return isActive
@@ -18,6 +20,7 @@ function Layout() {
           <span className='font-bold'>Duel Heaven</span>
           <NavLink to='/cards' className={navClass}>Cards</NavLink>
           <NavLink to='/decks' className={navClass}>Decks</NavLink>
+          <NavLink to='/wth' className={navClass}>WTH?</NavLink>
         </nav>
       </header>
       <Outlet></Outlet>
@@ -33,6 +36,9 @@ const router = createBrowserRouter([
       { path: '/cards', element: <CardSearchPage></CardSearchPage> },
       { path: '/decks', element: <DecksPage></DecksPage> },
       { path: '/decks/:id', element: <DeckPage></DeckPage> },
+      { path: 'wth', element: <WthListPage></WthListPage>},
+      { path: 'wth/new', element: <WthGuidePage></WthGuidePage>},
+      { path: 'wth/:id', element: <WthGuidePage></WthGuidePage>},
       { path: '*', element: <p className='p-8'>Page Not Found.</p>}
     ],
   },

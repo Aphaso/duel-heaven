@@ -7,6 +7,7 @@ import { CardsModule } from './cards/cards.module';
 import { UsersModule } from './users/users.module';
 import { DecksModule } from './decks/decks.module';
 import { SidePatternsModule } from './side-patterns/side-patterns.module';
+import { WthModule } from './wth/wth.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SidePatternsModule } from './side-patterns/side-patterns.module';
     UsersModule,
     DecksModule,
     SidePatternsModule,
+    WthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

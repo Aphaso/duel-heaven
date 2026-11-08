@@ -84,3 +84,46 @@ export interface SidePatternPayload {
     cardsOut: { cardId: number; quantity: number }[];
     cardsIn: { cardId: number; quantity: number }[];
 }
+
+export interface WthResponse {
+    id: string;
+    cardId: number;
+    position: number;
+    card: Card;
+}
+
+export interface WthEntry {
+    id: string;
+    targetCardId: number;
+    notes: string | null;
+    position: number;
+    targetCard: Card;
+    responses: WthResponse[];
+}
+
+export interface WthGuide {
+    id: string;
+    opponentDeckName: string;
+    notes: string | null;
+    createdAt: string;
+    updatedAt: string;
+    entries: WthEntry[];
+}
+
+export interface WthGuideSummary {
+    id: string;
+    opponentDeckName: string;
+    notes: string | null;
+    updatedAt: string;
+    _count: { entries: number };
+}
+
+export interface WthPayload {
+    opponentDeckName: string;
+    notes: string | null;
+    entries: {
+        targetCardId: number;
+        notes: string | null;
+        responses: { cardId: number }[];
+    }[];
+}

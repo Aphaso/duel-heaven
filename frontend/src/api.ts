@@ -1,4 +1,4 @@
-import type { Card, Deck, DeckDetail, DeckSection, Paginated, SidePattern, SidePatternPayload } from './types';
+import type { Card, Deck, DeckDetail, DeckSection, Paginated, SidePattern, SidePatternPayload, WthGuide, WthGuideSummary, WthPayload } from './types';
 
 /** Generic call: handles backend errors and 204 responses (no-body response). */
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -104,4 +104,26 @@ export function updateSidePattern(deckId: string, id: string, data: SidePatternP
 
 export function deleteSidePattern(deckId: string, id: string) {
     return request<void>(`/api/decks/${deckId}/side-patterns/${id}`, { method: 'DELETE' });
+}
+
+/** ------------------------------------------------------------------ WTH? */
+
+export function listWthGuides() {
+    return request<WthGuideSummary[]>('/api/wth');
+}
+
+export function getWthGuide(id: string) {
+    return request<WthGuide>(`/api/wth/${id}`);
+}
+
+export function createWthGuide(data: WthPayload) {
+    return request<WthGuide>('/api/wth', jsonBody('POST', data));
+}
+
+export function updateWthGuide(id: string, data: WthPayload) {
+    return request<WthGuide>(`/api/wth/${id}`, jsonBody('PUT', data));
+}
+
+export function deleteWthGuide(id: string) {
+    return request<void>(`/api/wth/${id}`, { method: 'DELETE' });
 }
