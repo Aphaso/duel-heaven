@@ -33,6 +33,8 @@ model Card {
 
   deckCards DeckCard[]
   sidePatternCards SidePatternCard[]
+  wthTargets WthEntry[] @relation("WthTarget")
+  WthResponses WthResponse[] @relation("WthResponse")
 
   @@index([name])
 }
@@ -45,7 +47,8 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  decks Deck[]
+  decks       Deck[]
+  wthGuides   WthGuide[]
 }
 
 enum DeckSection {
@@ -118,4 +121,41 @@ model SidePatternCard {
 
   @@unique([sidePatternId, cardId, direction])
   @@index([sidePatternId])
+}
+
+model WthGuide {
+  id               String     @id @default(cuid())
+  ownerId          String
+  owner            User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  opponentDeckName String
+  notes            String?
+  entries          WthEntry[]
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@unique([ownerId, opponentDeckName])
+}
+
+model WthEntry {
+  id           String        @id @default(cuid())
+  guideId      String
+  guide        WthGuide      @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  targetCardId Int
+  targetCard   Card          @relation("WthTarget", fields: [targetCardId], references: [id])
+  notes        String?
+  position     Int           @default(0)
+  responses    WthResponse[]
+
+  @@unique([guideId, targetCardId])
+}
+
+model WthResponse {
+  id       String   @id @default(cuid())
+  entryId  String
+  entry    WthEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  cardId   Int
+  card     Card     @relation("WthResponse", fields: [cardId], references: [id])
+  position Int      @default(0)
+
+  @@unique([entryId, cardId])
 }
