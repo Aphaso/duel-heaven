@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { DecksModule } from './decks/decks.module';
 import { SidePatternsModule } from './side-patterns/side-patterns.module';
 import { WthModule } from './wth/wth.module';
+import { CombosModule } from './combos/combos.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { WthModule } from './wth/wth.module';
     DecksModule,
     SidePatternsModule,
     WthModule,
+    CombosModule,
   ],
   controllers: [AppController],
   providers: [AppService],
