@@ -1,3 +1,5 @@
+import type { ComboStep } from './comboEngine';
+
 export interface Card {
     id: number;
     name: string;
@@ -157,4 +159,12 @@ export interface ComboSummary {
     description: string | null;
     stepCount: number;
     updatedAt: string;
+}
+
+export interface ComboPayload {
+    name: string;
+    description: string | null;
+    cards: { cardId: number; section: 'MAIN' | 'EXTRA'; quantity: number }[];
+    startingHand: number[];
+    steps: ComboStep[];
 }

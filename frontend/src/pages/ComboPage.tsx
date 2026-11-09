@@ -40,18 +40,23 @@ export default function ComboPage() {
                                 <p className='mt-1 text-gray-700'>{combo.data.description}</p>
                             )}
                         </div>
-                        <button
-                            type='button'
-                            disabled={remove.isPending}
-                            onClick={() => {
-                                if (window.confirm(`Delete "${combo.data.name}"?`)) {
-                                    remove.mutate();
-                                }
-                            }}
-                            className='rounded border border-red-600 px-3 py-1 text-red-700 disabled:opacity-40'
-                        >
-                            Delete
-                        </button>
+                        <div className='flex gap-2'>
+                            <button
+                                type='button'
+                                disabled={remove.isPending}
+                                onClick={() => {
+                                    if (window.confirm(`Delete "${combo.data.name}"?`)) {
+                                        remove.mutate();
+                                    }
+                                }}
+                                className='rounded border border-red-600 px-3 py-1 text-red-700 disabled:opacity-40'
+                            >
+                                Delete
+                            </button>
+                            <Link to={`/combos/${combo.data.id}/edit`} className='rounded border px-3 py-1'>
+                                Edit
+                            </Link>
+                        </div>
                     </div>
                     {remove.isError && <p className='mt-2 text-red-600'>{remove.error.message}</p>}
 

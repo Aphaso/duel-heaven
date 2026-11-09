@@ -6,6 +6,7 @@ import WthListPage from './pages/WthListPage';
 import WthGuidePage from './pages/WthGuidePage';
 import ComboListPage from './pages/ComboListPage';
 import ComboPage from './pages/ComboPage';
+import ComboEditPage from './pages/ComboEditPage';
 
 function navClass({ isActive }: { isActive: boolean }) {
   return isActive
@@ -39,11 +40,13 @@ const router = createBrowserRouter([
       { path: '/cards', element: <CardSearchPage></CardSearchPage> },
       { path: '/decks', element: <DecksPage></DecksPage> },
       { path: '/decks/:id', element: <DeckPage></DeckPage> },
-      { path: 'wth', element: <WthListPage></WthListPage> },
-      { path: 'wth/new', element: <WthGuidePage></WthGuidePage> },
-      { path: 'wth/:id', element: <WthGuidePage></WthGuidePage> },
-      { path: 'combos', element: <ComboListPage></ComboListPage> },
-      { path: 'combos/:id', element: <ComboPage></ComboPage> },
+      { path: '/wth', element: <WthListPage></WthListPage> },
+      { path: '/wth/new', element: <WthGuidePage></WthGuidePage> },
+      { path: '/wth/:id', element: <WthGuidePage></WthGuidePage> },
+      { path: '/combos', element: <ComboListPage></ComboListPage> },
+      { path: '/combos/new', element: <ComboEditPage></ComboEditPage> },
+      { path: '/combos/:id', element: <ComboPage></ComboPage> },
+      { path: '/combos/:id/edit', element: <ComboEditPage></ComboEditPage> },
       { path: '*', element: <p className='p-8'>Page Not Found.</p>}
     ],
   },

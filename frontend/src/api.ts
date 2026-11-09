@@ -1,4 +1,4 @@
-import { type Card, type Deck, type DeckDetail, type DeckSection, type Paginated, type SidePattern, type SidePatternPayload, type WthGuide, type WthGuideSummary, type WthPayload, type Combo, type ComboSummary } from './types';
+import { type Card, type Deck, type DeckDetail, type DeckSection, type Paginated, type SidePattern, type SidePatternPayload, type WthGuide, type WthGuideSummary, type WthPayload, type Combo, type ComboSummary, type ComboPayload } from './types';
 
 /** Generic call: handles backend errors and 204 responses (no-body response). */
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -136,6 +136,14 @@ export function listCombos() {
 
 export function getCombo(id: string) {
     return request<Combo>(`/api/combos/${id}`);
+}
+
+export function createCombo(data: ComboPayload) {
+    return request<Combo>('/api/combos', jsonBody('POST', data));
+}
+
+export function updateCombo(id: string, data: ComboPayload) {
+    return request<Combo>(`/api/combos/${id}`, jsonBody('PUT', data));
 }
 
 export function deleteCombo(id: string) {

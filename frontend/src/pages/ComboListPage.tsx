@@ -7,7 +7,12 @@ export default function ComboListPage() {
 
     return (
         <main className='mx-auto max-w-4xl p-8'>
-            <h1 className='text-2xl font-bold'>Combos</h1>
+            <div className='flex items-center justify-between'>
+                <h1 className='text-2xl font-bold'>Combos</h1>
+                <Link to='/combos/new' className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'>
+                    New Combo
+                </Link>
+            </div>
 
             {combos.isPending && <p className='mt-4 text-gray-500'>Loading...</p>}
             {combos.isError && <p className='mt-4 text-red-600'>{combos.error.message}</p>}
