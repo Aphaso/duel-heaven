@@ -127,3 +127,34 @@ export interface WthPayload {
         responses: { cardId: number }[];
     }[];
 }
+
+export interface ComboCardRow {
+    id: string;
+    cardId: number;
+    section: 'MAIN' | 'EXTRA';
+    quantity: number;
+    position: number;
+    card: Card;
+}
+
+export interface Combo {
+    id: string;
+    name: string;
+    description: string | null;
+    /** Card ids of the starting hand, repeated for more copies */
+    startingHand: number[];
+    /** JSON from the database checked again by the engine before using it */
+    steps: unknown;
+    stepCount: number;
+    cards: ComboCardRow[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ComboSummary {
+    id: string;
+    name: string;
+    description: string | null;
+    stepCount: number;
+    updatedAt: string;
+}

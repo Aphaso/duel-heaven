@@ -1,4 +1,4 @@
-import type { Card, Deck, DeckDetail, DeckSection, Paginated, SidePattern, SidePatternPayload, WthGuide, WthGuideSummary, WthPayload } from './types';
+import { type Card, type Deck, type DeckDetail, type DeckSection, type Paginated, type SidePattern, type SidePatternPayload, type WthGuide, type WthGuideSummary, type WthPayload, type Combo, type ComboSummary } from './types';
 
 /** Generic call: handles backend errors and 204 responses (no-body response). */
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -126,4 +126,18 @@ export function updateWthGuide(id: string, data: WthPayload) {
 
 export function deleteWthGuide(id: string) {
     return request<void>(`/api/wth/${id}`, { method: 'DELETE' });
+}
+
+/** ---------------------------------------------------------------- Combos */
+
+export function listCombos() {
+    return request<ComboSummary[]>('/api/combos');
+}
+
+export function getCombo(id: string) {
+    return request<Combo>(`/api/combos/${id}`);
+}
+
+export function deleteCombo(id: string) {
+    return request<void>(`/api/combos/${id}`, { method: 'DELETE' });
 }

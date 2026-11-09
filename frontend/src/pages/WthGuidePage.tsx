@@ -58,7 +58,7 @@ function WthGuideScreen({ id }: { id: string | undefined }) {
     return (
         <main className='mx-auto max-w-5xl p-8'>
             <Link to='/wth' className='text-sm text-blue-700 hover:underline'>
-                ← All guides
+                ← All Guides
             </Link>
 
             {id && guideQuery.isPending && <p className='mt-4 text-gray-500'>Loading...</p>}

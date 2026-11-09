@@ -48,7 +48,7 @@ export default function DeckPage() {
     return (
         <main className='mx-auto max-w-7xl p-8'>
             <Link to='/decks' className='text-sm text-blue-700 hover:underline'>
-                ← All decks
+                ← All Decks
             </Link>
 
             {deck.isPending && <p className='mt-4 text-gray-500'>Loading...</p>}
