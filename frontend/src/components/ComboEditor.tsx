@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { cardImageUrl, getDeck, listDecks } from '../api';
 import WthCardSearch from './WthCardSearch';
 import { addCopy, canAddCopy, comboProblems, COMBO_DECK_UI, deckCounts, handCopies, importDeckCards, isSameComboDraft, removeCopy, setHandCopies, type ComboDraft, type DraftCard } from '../comboDraft';
+import ComboStepRecorder from './ComboStepRecorder';
 
 interface Props {
     initial: ComboDraft;
@@ -53,6 +54,7 @@ export default function ComboEditor({ initial, saving, error, onSave, onDirtyCha
     const [searching, setSearching] = useState(false);
     const [importId, setImportId] = useState('');
     const [importError, setImportError] = useState<string | null>(null);
+    const [tab, setTab] = useState<'setup' | 'steps'>('setup');
 
     const dirty = !isSameComboDraft(draft, initial);
     const problems = useMemo(() => comboProblems(draft), [draft]);
@@ -118,153 +120,178 @@ export default function ComboEditor({ initial, saving, error, onSave, onDirtyCha
                 </label>
             </div>
 
-            <section className='space-y-3'>
-                <div className='flex flex-wrap items-center gap-3'>
-                    <h2 className='text-lg font-semibold'>Decklist</h2>
-                    <span className='text-sm text-gray-500'>
-                        Main {counts.MAIN}/{COMBO_DECK_UI.mainMax} · Extra {counts.EXTRA}/{COMBO_DECK_UI.extraMax}
-                    </span>
+            <div role='tablist' className='flex gap-1 border-b border-gray-200'>
+                {(['setup', 'steps'] as const).map((t) => (
                     <button
+                        key={t}
                         type='button'
-                        onClick={() => setSearching((s) => !s)}
-                        className='rounded border px-3 py-1 text-sm'
+                        role='tab'
+                        aria-selected={tab === t}
+                        onClick={() => setTab(t)}
+                        className={`-mb-px border-b-2 px-4 py-2 text-sm ${
+                            tab === t
+                                ? 'border-blue-600 font-semibold text-blue-700'
+                                : 'border-transparent text-gray-600 hover:text-gray-900'
+                        }`}
                     >
-                        {searching ? 'Hide search' : '+ Add cards'}
+                        {t === 'setup' ? 'Setup' : `Steps (${draft.steps.length})`}
                     </button>
-                    <select
-                        value={importId}
-                        onChange={(e) => setImportId(e.target.value)}
-                        className='rounded border px-2 py-1 text-sm'
-                    >
+                ))}
+            </div>
+
+            <div className={tab === 'setup' ? 'space--y-6' : 'hidden'}>
+                <section className='space-y-3'>
+                    <div className='flex flex-wrap items-center gap-3'>
+                        <h2 className='text-lg font-semibold'>Decklist</h2>
+                        <span className='text-sm text-gray-500'>
+                            Main {counts.MAIN}/{COMBO_DECK_UI.mainMax} · Extra {counts.EXTRA}/{COMBO_DECK_UI.extraMax}
+                        </span>
+                        <button
+                            type='button'
+                            onClick={() => setSearching((s) => !s)}
+                            className='rounded border px-3 py-1 text-sm'
+                        >
+                            {searching ? 'Hide search' : '+ Add cards'}
+                        </button>
+                        <select
+                            value={importId}
+                            onChange={(e) => setImportId(e.target.value)}
+                            className='rounded border px-2 py-1 text-sm'
+                        >
                         <option value=''>Import from a deck...</option>
                         {decks.data?.map((d) => (
-                            // ADAPT: the id and the name of your deck list items
                             <option key={d.id} value={d.id}>
                                 {d.name}
                             </option>
                         ))}
-                    </select>
-                    <button
-                        type='button'
-                        onClick={importDeck}
-                        disabled={importId === ''}
-                        className='rounded border px-3 py-1 text-sm disabled:opacity-40'
-                    >
-                        Import
-                    </button>
-                </div>
-                {importError && <p className='text-sm text-red-700'>{importError}</p>}
-
-                {searching && (
-                    <WthCardSearch
-                        title='Add Cards to the combo'
-                        disabledIds={fullIds}
-                        onPick={(card) => setDraft((d) => addCopy(d, card))}
-                        onClose={() => setSearching(false)}
-                    >
-                    </WthCardSearch>
-                )}
-
-                {draft.cards.length === 0 && (
-                    <p className='text-sm text-gray-500'>No Cards yet: add some or import a deck.</p>
-                )}
-                {mainCards.length > 0 && (
-                    <div>
-                        <h3 className='mb-1 text-sm font-semibold'>Main Deck</h3>
-                        <ul className='flex flex-wrap gap-3'>
-                            {mainCards.map((e) => (
-                                <DeckTile
-                                    key={e.card.id}
-                                    entry={e}
-                                    canAdd={canAddCopy(draft, e.card)}
-                                    onAdd={() => setDraft(addCopy(draft, e.card))}
-                                    onRemove={() => setDraft(removeCopy(draft, e.card.id))}
-                                >
-                                </DeckTile>
-                            ))}
-                        </ul>
+                        </select>
+                        <button
+                            type='button'
+                            onClick={importDeck}
+                            disabled={importId === ''}
+                            className='rounded border px-3 py-1 text-sm disabled:opacity-40'
+                        >
+                            Import
+                        </button>
                     </div>
-                )}
-                {extraCards.length > 0 && (
-                    <div>
-                        <h3 className='mb-1 text-sm font-semibold'>Extra Deck</h3>
-                        <ul className='flex flex-wrap gap-3'>
-                            {extraCards.map((e) => (
-                                <DeckTile
-                                    key={e.card.id}
-                                    entry={e}
-                                    canAdd={canAddCopy(draft, e.card)}
-                                    onAdd={() => setDraft(addCopy(draft, e.card))}
-                                    onRemove={() => setDraft(removeCopy(draft, e.card.id))}
-                                >
-                                </DeckTile>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-            </section>
+                    {importError && <p className='text-sm text-red-700'>{importError}</p>}
 
-            <section className='space-y-2'>
-                <h2 className='text-lg font-semibold'>
-                    Starting Hand
-                    <span className='ml-2 text-sm font-normal text-gray-500'>
-                        {draft.startingHand.length}/{COMBO_DECK_UI.maxHand} cards
-                    </span>
-                </h2>
-                {mainCards.length === 0 ? (
-                    <p className='text-sm text-gray-500'>Add Main Deck cards to choose the hand.</p>
-                ) : (
-                    <ul className='flex flex-wrap gap-3'>
-                        {mainCards.map((e) => {
-                            const inHand = handCopies(draft, e.card.id);
-                            return (
-                                <li
-                                    key={e.card.id}
-                                    className={`w-20 rounded border p-1 text-center ${
-                                        inHand > 0 ? 'border-blue-500' : 'border-gray-200'
-                                    }`}
-                                >
-                                    <img
-                                        src={cardImageUrl(e.card.id)}
-                                        alt={e.card.name}
-                                        draggable={false}
-                                        className='w-full'
+                    {searching && (
+                        <WthCardSearch
+                            title='Add Cards to the combo'
+                            disabledIds={fullIds}
+                            onPick={(card) => setDraft((d) => addCopy(d, card))}
+                            onClose={() => setSearching(false)}
+                        >
+                        </WthCardSearch>
+                    )}
+
+                    {draft.cards.length === 0 && (
+                        <p className='text-sm text-gray-500'>No Cards yet: add some or import a deck.</p>
+                    )}
+                    {mainCards.length > 0 && (
+                        <div>
+                            <h3 className='mb-1 text-sm font-semibold'>Main Deck</h3>
+                            <ul className='flex flex-wrap gap-3'>
+                                {mainCards.map((e) => (
+                                    <DeckTile
+                                        key={e.card.id}
+                                        entry={e}
+                                        canAdd={canAddCopy(draft, e.card)}
+                                        onAdd={() => setDraft(addCopy(draft, e.card))}
+                                        onRemove={() => setDraft(removeCopy(draft, e.card.id))}
                                     >
-                                    </img>
-                                    <div className='flex items-center justify-center gap-1 text-sm'>
-                                        <button
-                                            type='button'
-                                            disabled={inHand === 0}
-                                            onClick={() => setDraft(setHandCopies(draft, e.card.id, inHand - 1))}
-                                            className='rounded border px-1.5 disabled:opacity-30'
-                                        >
-                                            −
-                                        </button>
-                                        <span>
-                                            {inHand}/{e.quantity}
-                                        </span>
-                                        <button
-                                            type='button'
-                                            disabled={
-                                                inHand >= e.quantity ||
-                                                draft.startingHand.length >= COMBO_DECK_UI.maxHand
-                                            }
-                                            onClick={() => setDraft(setHandCopies(draft, e.card.id, inHand + 1))}
-                                            className='rounded border px-1.5 disabled:opacity-30'
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                )}
-            </section>
+                                    </DeckTile>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {extraCards.length > 0 && (
+                        <div>
+                            <h3 className='mb-1 text-sm font-semibold'>Extra Deck</h3>
+                            <ul className='flex flex-wrap gap-3'>
+                                {extraCards.map((e) => (
+                                    <DeckTile
+                                        key={e.card.id}
+                                        entry={e}
+                                        canAdd={canAddCopy(draft, e.card)}
+                                        onAdd={() => setDraft(addCopy(draft, e.card))}
+                                        onRemove={() => setDraft(removeCopy(draft, e.card.id))}
+                                    >
+                                    </DeckTile>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </section>
 
-            <p className='text-sm text-gray-500'>
-                Steps: {draft.steps.length}. {draft.steps.length > 0 ? 'They are kept as they are. ' : ''}
-            </p>
+                <section className='space-y-2'>
+                    <h2 className='text-lg font-semibold'>
+                        Starting Hand
+                        <span className='ml-2 text-sm font-normal text-gray-500'>
+                            {draft.startingHand.length}/{COMBO_DECK_UI.maxHand} cards
+                        </span>
+                    </h2>
+                    {mainCards.length === 0 ? (
+                        <p className='text-sm text-gray-500'>Add Main Deck cards to choose the hand.</p>
+                    ) : (
+                        <ul className='flex flex-wrap gap-3'>
+                            {mainCards.map((e) => {
+                                const inHand = handCopies(draft, e.card.id);
+                                return (
+                                    <li
+                                        key={e.card.id}
+                                        className={`w-20 rounded border p-1 text-center ${
+                                            inHand > 0 ? 'border-blue-500' : 'border-gray-200'
+                                        }`}
+                                    >
+                                        <img
+                                            src={cardImageUrl(e.card.id)}
+                                            alt={e.card.name}
+                                            draggable={false}
+                                            className='w-full'
+                                        >
+                                        </img>
+                                        <div className='flex items-center justify-center gap-1 text-sm'>
+                                            <button
+                                                type='button'
+                                                disabled={inHand === 0}
+                                                onClick={() => setDraft(setHandCopies(draft, e.card.id, inHand - 1))}
+                                                className='rounded border px-1.5 disabled:opacity-30'
+                                            >
+                                                −
+                                            </button>
+                                            <span>
+                                                {inHand}/{e.quantity}
+                                            </span>
+                                            <button
+                                                type='button'
+                                                disabled={
+                                                    inHand >= e.quantity ||
+                                                    draft.startingHand.length >= COMBO_DECK_UI.maxHand
+                                                }
+                                                onClick={() => setDraft(setHandCopies(draft, e.card.id, inHand + 1))}
+                                                className='rounded border px-1.5 disabled:opacity-30'
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                </section>
+            </div>
+
+            <div className={tab === 'steps' ? '' : 'hidden'}>
+                <ComboStepRecorder
+                    key={JSON.stringify([draft.cards.map((c) => [c.card.id, c.quantity]), draft.startingHand])}
+                    draft={draft}
+                    onStepsChange={(steps) => setDraft((d) => ({ ...d, steps}))}
+                >
+                </ComboStepRecorder>
+            </div>
 
             {dirty && problems.length > 0 && (
                 <ul className='list-disc pl-5 text-sm text-amber-700'>
