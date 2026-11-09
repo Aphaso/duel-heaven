@@ -56,11 +56,14 @@ function CardImage({
 
     if (state.face === 'DOWN') {
         return (
-            <div
+            <img
+                src='/card-back.jpg'
+                alt='Face-down Card'
                 title='Face-down Card'
-                className={`${classes} border border-amber-950 bg-amber-800`}
-                style={{ aspectRatio: '59 / 86' }}
-            />
+                draggable={false}
+                className={classes}
+            >
+            </img>
         );
     }
     return (
