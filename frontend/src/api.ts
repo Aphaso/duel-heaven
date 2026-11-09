@@ -1,4 +1,4 @@
-import { type Card, type Deck, type DeckDetail, type DeckSection, type Paginated, type SidePattern, type SidePatternPayload, type WthGuide, type WthGuideSummary, type WthPayload, type Combo, type ComboSummary, type ComboPayload } from './types';
+import { type Card, type Deck, type DeckDetail, type DeckSection, type Paginated, type SidePattern, type SidePatternPayload, type WthGuide, type WthGuideSummary, type WthPayload, type Combo, type ComboSummary, type ComboPayload, type Playlist, type PlaylistSummary, type PlaylistPayload } from './types';
 
 /** Generic call: handles backend errors and 204 responses (no-body response). */
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
@@ -148,4 +148,26 @@ export function updateCombo(id: string, data: ComboPayload) {
 
 export function deleteCombo(id: string) {
     return request<void>(`/api/combos/${id}`, { method: 'DELETE' });
+}
+
+/** ------------------------------------------------------- Combo Playlists */
+
+export function listPlaylists() {
+    return request<PlaylistSummary[]>('/api/playlists');
+}
+
+export function getPlaylist(id: string) {
+    return request<Playlist>(`/api/playlists/${id}`);
+}
+
+export function createPlaylist(data: PlaylistPayload) {
+    return request<Playlist>('/api/playlists', jsonBody('POST', data));
+}
+
+export function updatePlaylist(id: string, data: PlaylistPayload) {
+    return request<Playlist>(`/api/playlists/${id}`, jsonBody('PUT', data));
+}
+
+export function deletePlaylist(id: string) {
+    return request<void>(`/api/playlists/${id}`, { method: 'DELETE' });
 }

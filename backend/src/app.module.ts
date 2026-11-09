@@ -9,6 +9,7 @@ import { DecksModule } from './decks/decks.module';
 import { SidePatternsModule } from './side-patterns/side-patterns.module';
 import { WthModule } from './wth/wth.module';
 import { CombosModule } from './combos/combos.module';
+import { PlaylistsModule } from './playlists/playlists.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CombosModule } from './combos/combos.module';
     SidePatternsModule,
     WthModule,
     CombosModule,
+    PlaylistsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

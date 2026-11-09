@@ -168,3 +168,33 @@ export interface ComboPayload {
     startingHand: number[];
     steps: ComboStep[];
 }
+
+export interface PlaylistSummary {
+    id: string;
+    name: string;
+    description: string | null;
+    updatedAt: string;
+    _count: { combos: number };
+}
+
+export interface PlaylistComboRow {
+    id: string;
+    comboId: string;
+    position: number;
+    combo: ComboSummary;
+}
+
+export interface Playlist {
+    id: string;
+    name: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    combos: PlaylistComboRow[];
+}
+
+export interface PlaylistPayload {
+    name: string;
+    description: string | null;
+    comboIds: string[];
+}

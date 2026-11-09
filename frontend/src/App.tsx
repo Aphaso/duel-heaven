@@ -7,6 +7,9 @@ import WthGuidePage from './pages/WthGuidePage';
 import ComboListPage from './pages/ComboListPage';
 import ComboPage from './pages/ComboPage';
 import ComboEditPage from './pages/ComboEditPage';
+import PlaylistListPage from './pages/PlaylistListPage';
+import PlaylistEditPage from './pages/PlaylistEditPage';
+import PlaylistPage from './pages/PlaylistPage';
 
 function navClass({ isActive }: { isActive: boolean }) {
   return isActive
@@ -25,6 +28,7 @@ function Layout() {
           <NavLink to='/decks' className={navClass}>Decks</NavLink>
           <NavLink to='/wth' className={navClass}>WTH?</NavLink>
           <NavLink to='/combos' className={navClass}>Combos</NavLink>
+          <NavLink to='/playlists' className={navClass}>Playlists</NavLink>
         </nav>
       </header>
       <Outlet></Outlet>
@@ -47,6 +51,10 @@ const router = createBrowserRouter([
       { path: '/combos/new', element: <ComboEditPage></ComboEditPage> },
       { path: '/combos/:id', element: <ComboPage></ComboPage> },
       { path: '/combos/:id/edit', element: <ComboEditPage></ComboEditPage> },
+      { path: '/playlists', element: <PlaylistListPage></PlaylistListPage> },
+      { path: '/playlists/new', element: <PlaylistEditPage></PlaylistEditPage> },
+      { path: '/playlists/:id', element: <PlaylistPage></PlaylistPage> },
+      { path: '/playlists/:id/edit', element: <PlaylistEditPage></PlaylistEditPage> },
       { path: '*', element: <p className='p-8'>Page Not Found.</p>}
     ],
   },
