@@ -51,6 +51,7 @@ model User {
   decks       Deck[]
   wthGuides   WthGuide[]
   combos      Combo[]
+  playlists   Playlist[]
 }
 
 enum DeckSection {
@@ -178,6 +179,8 @@ model Combo {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
+  playlists    PlaylistCombo[]
+
   @@index([ownerId])
 }
 
@@ -192,4 +195,28 @@ model ComboCard {
   position Int         @default(0)
 
   @@unique([comboId, cardId, section])
+}
+
+model Playlist {
+  id          String          @id @default(cuid())
+  ownerId     String
+  owner       User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  combos      PlaylistCombo[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([ownerId, name])
+}
+
+model PlaylistCombo {
+  id         String   @id @default(cuid())
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  comboId    String
+  combo      Combo    @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  position   Int
+
+  @@unique([playlistId, comboId])
 }
