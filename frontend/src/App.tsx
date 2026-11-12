@@ -1,4 +1,6 @@
 import { createBrowserRouter, Navigate, NavLink, Outlet, RouterProvider } from 'react-router';
+import { RequireAuth } from './auth/RequireAuth';
+import { useAuth } from './auth/useAuth';
 import CardSearchPage from './pages/CardSearchPage';
 import DeckPage from './pages/DeckPage';
 import DecksPage from './pages/DecksPage';
@@ -10,6 +12,8 @@ import ComboEditPage from './pages/ComboEditPage';
 import PlaylistListPage from './pages/PlaylistListPage';
 import PlaylistEditPage from './pages/PlaylistEditPage';
 import PlaylistPage from './pages/PlaylistPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
 function navClass({ isActive }: { isActive: boolean }) {
   return isActive
@@ -19,6 +23,8 @@ function navClass({ isActive }: { isActive: boolean }) {
 
 /** Bar on top + point where the page chosen by the router is shown. */
 function Layout() {
+  const { user, signOut } = useAuth();
+
   return (
     <>
       <header className='border-b border-gray-200'>
@@ -29,6 +35,18 @@ function Layout() {
           <NavLink to='/wth' className={navClass}>WTH?</NavLink>
           <NavLink to='/combos' className={navClass}>Combos</NavLink>
           <NavLink to='/playlists' className={navClass}>Playlists</NavLink>
+          <div className='ml-auto flex items-center gap-4 text-sm text-gray-600'>
+            <span title={user?.displayName ?? undefined}>
+              {user?.username ? `@${user.username}` : user?.email}
+            </span>
+            <button
+              type='button'
+              onClick={() => void signOut()}
+              className='rounded border border-gray-300 px-3 py-1 hover:bg-gray-50'
+            >
+              Log out
+            </button>
+          </div>
         </nav>
       </header>
       <Outlet></Outlet>
@@ -37,25 +55,32 @@ function Layout() {
 }
 
 const router = createBrowserRouter([
+  { path: '/login', element: <LoginPage></LoginPage> },
+  { path: '/register', element: <RegisterPage></RegisterPage> },
   {
-    element: <Layout></Layout>,
+    element: <RequireAuth></RequireAuth>,
     children: [
-      { path: '/', element: <Navigate to='/cards' replace></Navigate> },
-      { path: '/cards', element: <CardSearchPage></CardSearchPage> },
-      { path: '/decks', element: <DecksPage></DecksPage> },
-      { path: '/decks/:id', element: <DeckPage></DeckPage> },
-      { path: '/wth', element: <WthListPage></WthListPage> },
-      { path: '/wth/new', element: <WthGuidePage></WthGuidePage> },
-      { path: '/wth/:id', element: <WthGuidePage></WthGuidePage> },
-      { path: '/combos', element: <ComboListPage></ComboListPage> },
-      { path: '/combos/new', element: <ComboEditPage></ComboEditPage> },
-      { path: '/combos/:id', element: <ComboPage></ComboPage> },
-      { path: '/combos/:id/edit', element: <ComboEditPage></ComboEditPage> },
-      { path: '/playlists', element: <PlaylistListPage></PlaylistListPage> },
-      { path: '/playlists/new', element: <PlaylistEditPage></PlaylistEditPage> },
-      { path: '/playlists/:id', element: <PlaylistPage></PlaylistPage> },
-      { path: '/playlists/:id/edit', element: <PlaylistEditPage></PlaylistEditPage> },
-      { path: '*', element: <p className='p-8'>Page Not Found.</p>}
+      {
+        element: <Layout></Layout>,
+        children: [
+          { path: '/', element: <Navigate to='/cards' replace></Navigate> },
+          { path: '/cards', element: <CardSearchPage></CardSearchPage> },
+          { path: '/decks', element: <DecksPage></DecksPage> },
+          { path: '/decks/:id', element: <DeckPage></DeckPage> },
+          { path: '/wth', element: <WthListPage></WthListPage> },
+          { path: '/wth/new', element: <WthGuidePage></WthGuidePage> },
+          { path: '/wth/:id', element: <WthGuidePage></WthGuidePage> },
+          { path: '/combos', element: <ComboListPage></ComboListPage> },
+          { path: '/combos/new', element: <ComboEditPage></ComboEditPage> },
+          { path: '/combos/:id', element: <ComboPage></ComboPage> },
+          { path: '/combos/:id/edit', element: <ComboEditPage></ComboEditPage> },
+          { path: '/playlists', element: <PlaylistListPage></PlaylistListPage> },
+          { path: '/playlists/new', element: <PlaylistEditPage></PlaylistEditPage> },
+          { path: '/playlists/:id', element: <PlaylistPage></PlaylistPage> },
+          { path: '/playlists/:id/edit', element: <PlaylistEditPage></PlaylistEditPage> },
+          { path: '*', element: <p className='p-8'>Page Not Found.</p>}
+        ],
+      },
     ],
   },
 ]);
