@@ -1,34 +1,37 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../auth/auth.guard';
+import { CurrentUserId } from '../auth/current-user.decorator';
 import { PlaylistsService } from './playlists.service';
 import { SavePlaylistDto } from './save-playlist.dto';
 
 @Controller('playlists')
+@UseGuards(AuthGuard)
 export class PlaylistsController {
     constructor(private readonly playlists: PlaylistsService) {}
 
     @Get()
-    findAll() {
-        return this.playlists.findAll();
+    findAll(@CurrentUserId() userId: string) {
+        return this.playlists.findAll(userId);
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.playlists.findOne(id);
+    findOne(@CurrentUserId() userId: string, @Param('id') id: string) {
+        return this.playlists.findOne(userId, id);
     }
 
     @Post()
-    create(@Body() dto: SavePlaylistDto) {
-        return this.playlists.create(dto);
+    create(@CurrentUserId() userId: string, @Body() dto: SavePlaylistDto) {
+        return this.playlists.create(userId, dto);
     }
 
     @Put(':id')
-    update(@Param('id') id: string, @Body() dto: SavePlaylistDto) {
-        return this.playlists.update(id, dto);
+    update(@CurrentUserId() userId: string, @Param('id') id: string, @Body() dto: SavePlaylistDto) {
+        return this.playlists.update(userId, id, dto);
     }
 
     @Delete(':id')
     @HttpCode(204)
-    remove(@Param('id') id: string) {
-        return this.playlists.remove(id);
+    remove(@CurrentUserId() userId: string, @Param('id') id: string) {
+        return this.playlists.remove(userId, id);
     }
 }

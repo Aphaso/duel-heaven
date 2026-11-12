@@ -1,4 +1,5 @@
-import { Controller, DefaultValuePipe, Get, Header, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
+import { Controller, DefaultValuePipe, Get, Header, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../auth/auth.guard';
 import { CardsService } from './cards.service';
 import { CardsSyncService } from './cards-sync.service';
 import { CardImagesService } from './card-images.service';
@@ -25,11 +26,13 @@ export class CardsController {
     }
 
     @Post('sync')
+    @UseGuards(AuthGuard)
     sync() {
         return this.cardsSyncService.sync();
     }
 
     @Post('images/sync')
+    @UseGuards(AuthGuard)
     syncImages() {
         return this.cardImagesService.start();
     }
@@ -41,7 +44,7 @@ export class CardsController {
 
     @Get(':id/image')
     @Header('Cache-Control', 'public, max-age=86400')
-    imag(@Param('id', ParseIntPipe) id: number) {
+    image(@Param('id', ParseIntPipe) id: number) {
         return this.cardImagesService.getImage(id);
     }
 

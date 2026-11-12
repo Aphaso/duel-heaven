@@ -1,7 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { DEMO_USER_ID } from '../users/users.service';
 import { SavePlaylistDto } from './save-playlist.dto';
 
 const playlistInclude = {
@@ -19,9 +18,9 @@ const playlistInclude = {
 export class PlaylistsService {
     constructor(private readonly prisma: PrismaService) {}
 
-    findAll() {
+    findAll(userId: string) {
         return this.prisma.playlist.findMany({
-            where: { ownerId: DEMO_USER_ID },
+            where: { ownerId: userId },
             orderBy: { name: 'asc' },
             select: {
                 id: true,
@@ -33,9 +32,9 @@ export class PlaylistsService {
         });
     }
 
-    async findOne(id: string) {
+    async findOne(userId: string, id: string) {
         const playlist = await this.prisma.playlist.findFirst({
-            where: { id, ownerId: DEMO_USER_ID },
+            where: { id, ownerId: userId },
             include: playlistInclude,
         });
         if (!playlist) {
@@ -44,11 +43,11 @@ export class PlaylistsService {
         return playlist;
     }
 
-    async create(dto: SavePlaylistDto) {
-        const name = await this.validate(dto);
+    async create(userId: string, dto: SavePlaylistDto) {
+        const name = await this.validate(userId, dto);
         return this.prisma.playlist.create({
             data: {
-                ownerId: DEMO_USER_ID,
+                ownerId: userId,
                 name,
                 description: this.descriptionOf(dto),
                 combos: { create: this.combosData(dto) },
@@ -57,9 +56,9 @@ export class PlaylistsService {
         });
     }
 
-    async update(id: string, dto: SavePlaylistDto) {
-        await this.findOne(id); // 404 if it is not ours
-        const name = await this.validate(dto, id);
+    async update(userId: string, id: string, dto: SavePlaylistDto) {
+        await this.findOne(userId, id); // 404 if it is not ours
+        const name = await this.validate(userId, dto, id);
         // All or nothing: old links out, new ones in (the order is the position)
         const [, updated] = await this.prisma.$transaction([
             this.prisma.playlistCombo.deleteMany({ where: { playlistId: id } }),
@@ -77,8 +76,8 @@ export class PlaylistsService {
     }
 
     /** Deletes the playlist and its links: the combos are NOT deleted. */
-    async remove(id: string) {
-        await this.findOne(id);
+    async remove(userId: string, id: string) {
+        await this.findOne(userId, id);
         await this.prisma.playlist.delete({ where: { id } });
     }
 
@@ -92,7 +91,7 @@ export class PlaylistsService {
     }
 
     /** Returns the trimmed name if everything is valid, otherwise throws. */
-    private async validate(dto: SavePlaylistDto, excludeId?: string) {
+    private async validate(userId: string, dto: SavePlaylistDto, excludeId?: string) {
         const name = dto.name.trim();
         if (name === '') {
             throw new BadRequestException('Playlist name is mandatory');
@@ -100,7 +99,7 @@ export class PlaylistsService {
 
         // Only the user's own combos can go into a playlist
         const found = await this.prisma.combo.findMany({
-            where: { id: { in: dto.comboIds }, ownerId: DEMO_USER_ID },
+            where: { id: { in: dto.comboIds }, ownerId: userId },
             select: { id: true },
         });
         const known = new Set(found.map((c) => c.id));
@@ -111,7 +110,7 @@ export class PlaylistsService {
 
         const sameName = await this.prisma.playlist.findFirst({
             where: {
-                ownerId: DEMO_USER_ID,
+                ownerId: userId,
                 name: { equals: name, mode: 'insensitive' },
                 ...(excludeId ? { NOT: { id: excludeId } } : {}),
             },

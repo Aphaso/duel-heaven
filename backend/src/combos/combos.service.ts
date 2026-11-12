@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { DEMO_USER_ID } from '../users/users.service';
 import { replay, type ComboCardEntry } from './combo-engine';
 import { checkComboCards, type ComboCardInfo } from './combo-rules';
 import { SaveComboDto } from './save-combo.dto';
@@ -14,17 +13,17 @@ const comboInclude = {
 export class CombosService {
     constructor(private readonly prisma: PrismaService) {}
 
-    findAll() {
+    findAll(userId: string) {
         return this.prisma.combo.findMany({
-            where: { ownerId: DEMO_USER_ID },
+            where: { ownerId: userId },
             orderBy: { updatedAt: 'desc' },
             select: { id: true, name: true, description: true, stepCount: true, updatedAt: true },
         });
     }
 
-    async findOne(id: string) {
+    async findOne(userId: string, id: string) {
         const combo = await this.prisma.combo.findFirst({
-            where: { id, ownerId: DEMO_USER_ID },
+            where: { id, ownerId: userId },
             include: comboInclude,
         });
         if (!combo) {
@@ -33,11 +32,11 @@ export class CombosService {
         return combo;
     }
 
-    async create(dto: SaveComboDto) {
+    async create(userId: string, dto: SaveComboDto) {
         const valid = await this.validate(dto);
         return this.prisma.combo.create({
             data: {
-                ownerId: DEMO_USER_ID,
+                ownerId: userId,
                 name: valid.name,
                 description: valid.description,
                 startingHand: dto.startingHand,
@@ -49,8 +48,8 @@ export class CombosService {
         });
     }
 
-    async update(id: string, dto: SaveComboDto) {
-        await this.findOne(id); // 404 if it is not ours
+    async update(userId: string, id: string, dto: SaveComboDto) {
+        await this.findOne(userId, id); // 404 if it is not ours
         const valid = await this.validate(dto);
         // All or nothing: old decklist out, new one in
         const [, updated] = await this.prisma.$transaction([
@@ -71,8 +70,8 @@ export class CombosService {
         return updated;
     }
 
-    async remove(id: string) {
-        await this.findOne(id);
+    async remove(userId: string, id: string) {
+        await this.findOne(userId, id);
         await this.prisma.combo.delete({ where: { id } });
     }
 

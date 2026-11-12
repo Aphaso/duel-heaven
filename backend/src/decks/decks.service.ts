@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DEMO_USER_ID } from '../users/users.service';
 import { CreateDeckDto } from './create-deck.dto';
 import { SaveDeckListDto } from './save-deck-list.dto';
 import { UpdateDeckDto } from './update-deck.dto';
@@ -10,16 +9,16 @@ import { analyzeDeck, checkDeckList } from './deck-rules';
 export class DecksService {
     constructor(private readonly prisma: PrismaService) {}
 
-    findAll() {
+    findAll(userId: string) {
         return this.prisma.deck.findMany({
-            where: { ownerId: DEMO_USER_ID },
+            where: { ownerId: userId },
             orderBy: { updatedAt: 'desc' }
         });
     }
 
-    async findOne(id: string) {
+    async findOne(userId: string, id: string) {
         const deck = await this.prisma.deck.findFirst({
-            where: { id, ownerId: DEMO_USER_ID },
+            where: { id, ownerId: userId },
             include: {
                 cards: {
                     include: { card: true },
@@ -33,25 +32,25 @@ export class DecksService {
         return { ...deck, summary: analyzeDeck(deck.cards) };
     }
 
-    create(dto: CreateDeckDto) {
+    create(userId: string, dto: CreateDeckDto) {
         return this.prisma.deck.create({
-            data: { ...dto, ownerId: DEMO_USER_ID }
+            data: { ...dto, ownerId: userId }
         });
     }
 
-    async update(id: string, dto: UpdateDeckDto) {
-        await this.assertOwned(id);
+    async update(userId: string, id: string, dto: UpdateDeckDto) {
+        await this.assertOwned(userId, id);
         await this.prisma.deck.update({ where: { id }, data: dto });
-        return this.findOne(id);
+        return this.findOne(userId, id);
     }
 
-    async remove(id: string) {
-        await this.assertOwned(id);
+    async remove(userId: string, id: string) {
+        await this.assertOwned(userId, id);
         await this.prisma.deck.delete({ where: { id } });
     }
 
-    async saveList(deckId: string, dto: SaveDeckListDto) {
-        await this.assertOwned(deckId);
+    async saveList(userId: string, deckId: string, dto: SaveDeckListDto) {
+        await this.assertOwned(userId, deckId);
 
         const cardIds = [...new Set(dto.cards.map((c) => c.cardId))];
         const found = await this.prisma.card.findMany({
@@ -87,12 +86,12 @@ export class DecksService {
             }),
         ]);
 
-        return this.findOne(deckId);
+        return this.findOne(userId, deckId);
     }
 
-    private async assertOwned(id: string) {
+    private async assertOwned(userId: string, id: string) {
         const deck = await this.prisma.deck.findFirst({
-            where: { id, ownerId: DEMO_USER_ID },
+            where: { id, ownerId: userId },
             select: { id: true },
         });
         if (!deck) {

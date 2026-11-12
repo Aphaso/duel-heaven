@@ -1,33 +1,44 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../auth/auth.guard';
+import { CurrentUserId } from '../auth/current-user.decorator';
 import { SaveSidePatternDto } from './save-side-pattern.dto';
 import { SidePatternsService } from './side-patterns.service';
 
 @Controller('decks/:deckId/side-patterns')
+@UseGuards(AuthGuard)
 export class SidePatternsController {
     constructor(private readonly sidePatternsService: SidePatternsService) {}
 
     @Get()
-    list(@Param('deckId') deckId: string) {
-        return this.sidePatternsService.list(deckId);
+    list(@CurrentUserId() userId: string, @Param('deckId') deckId: string) {
+        return this.sidePatternsService.list(userId, deckId);
     }
 
     @Post()
-    create(@Param('deckId') deckId: string, @Body() dto: SaveSidePatternDto) {
-        return this.sidePatternsService.create(deckId, dto);
+    create(
+        @CurrentUserId() userId: string,
+        @Param('deckId') deckId: string,
+        @Body() dto: SaveSidePatternDto) {
+        return this.sidePatternsService.create(userId, deckId, dto);
     }
 
     @Put(':id')
     update(
+        @CurrentUserId() userId: string,
         @Param('deckId') deckId: string,
         @Param('id') id: string,
         @Body() dto: SaveSidePatternDto,
     ) {
-        return this.sidePatternsService.update(deckId, id, dto);
+        return this.sidePatternsService.update(userId, deckId, id, dto);
     }
 
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
-    remove(@Param('deckId') deckId: string, @Param('id') id: string) {
-        return this.sidePatternsService.remove(deckId, id);
+    remove(
+        @CurrentUserId() userId: string,
+        @Param('deckId') deckId: string,
+        @Param('id') id: string,
+    ) {
+        return this.sidePatternsService.remove(userId, deckId, id);
     }
 }

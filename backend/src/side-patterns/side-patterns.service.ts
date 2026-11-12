@@ -2,7 +2,6 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import type { DeckEntry } from '../decks/deck-rules';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { DEMO_USER_ID } from '../users/users.service';
 import { SaveSidePatternDto } from './save-side-pattern.dto';
 import { checkSidePattern } from './side-pattern-rules';
 
@@ -35,8 +34,8 @@ function format(pattern: PatternWithCards, deckEntries: DeckEntry[]) {
 export class SidePatternsService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async list(deckId: string) {
-        const deckEntries = await this.loadDeckEntries(deckId);
+    async list(userId: string, deckId: string) {
+        const deckEntries = await this.loadDeckEntries(userId, deckId);
         const patterns = await this.prisma.sidePattern.findMany({
             where: { deckId },
             orderBy: { opponentDeckName: 'asc' },
@@ -45,8 +44,8 @@ export class SidePatternsService {
         return patterns.map((p) => format(p, deckEntries));
     }
 
-    async create(deckId: string, dto: SaveSidePatternDto) {
-        const deckEntries = await this.validate(deckId, dto);
+    async create(userId: string, deckId: string, dto: SaveSidePatternDto) {
+        const deckEntries = await this.validate(userId, deckId, dto);
         const created = await this.prisma.sidePattern.create({
             data: {
                 deckId,
@@ -60,9 +59,9 @@ export class SidePatternsService {
     }
 
     /** Replaces the whole pattern */
-    async update(deckId: string, id: string, dto: SaveSidePatternDto) {
-        await this.assertPatternOwned(deckId, id);
-        const deckEntries = await this.validate(deckId, dto, id);
+    async update(userId: string, deckId: string, id: string, dto: SaveSidePatternDto) {
+        await this.assertPatternOwned(userId, deckId, id);
+        const deckEntries = await this.validate(userId, deckId, dto, id);
         const [, updated] = await this.prisma.$transaction([
             this.prisma.sidePatternCard.deleteMany({
                 where: { sidePatternId: id },
@@ -80,15 +79,15 @@ export class SidePatternsService {
         return format(updated, deckEntries);
     }
 
-    async remove(deckId: string, id: string) {
-        await this.assertPatternOwned(deckId, id);
+    async remove(userId: string, deckId: string, id: string) {
+        await this.assertPatternOwned(userId, deckId, id);
         await this.prisma.sidePattern.delete({ where: { id } });
     }
 
     /** The cards of the saved deck, or 404 if the deck doesn't belong to the user or doesn't exist */
-    private async loadDeckEntries(deckId: string): Promise<DeckEntry[]> {
+    private async loadDeckEntries(userId: string, deckId: string): Promise<DeckEntry[]> {
         const deck = await this.prisma.deck.findFirst({
-            where: { id: deckId, ownerId: DEMO_USER_ID },
+            where: { id: deckId, ownerId: userId },
             select: {
                 cards: { select: { cardId: true, section: true, quantity: true } },
             },
@@ -101,11 +100,12 @@ export class SidePatternsService {
 
     /** Runs every check before anything is written. Returns the deck cards it loaded */
     private async validate(
+        userId: string,
         deckId: string,
         dto: SaveSidePatternDto,
         ignorePatternId?: string,
     ) {
-        const deckEntries = await this.loadDeckEntries(deckId);
+        const deckEntries = await this.loadDeckEntries(userId, deckId);
 
         const cardIds = [
             ...new Set([...dto.cardsOut, ...dto.cardsIn].map((c) => c.cardId)),
@@ -164,9 +164,9 @@ export class SidePatternsService {
     }
 
     /** 404 if the pattern doesn't exist, is in another Deck or the Deck doesn't belong to the user */
-    private async assertPatternOwned(deckId: string, id: string) {
+    private async assertPatternOwned(userId: string, deckId: string, id: string) {
         const pattern = await this.prisma.sidePattern.findFirst({
-            where: { id, deckId, deck: { ownerId: DEMO_USER_ID } },
+            where: { id, deckId, deck: { ownerId: userId } },
             select: { id: true },
         });
         if (!pattern) {

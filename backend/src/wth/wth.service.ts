@@ -1,7 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { DEMO_USER_ID } from '../users/users.service';
 import { SaveWthGuideDto } from './save-wth-guide.dto';
 import { checkWthEntries } from './wth-rules';
 
@@ -25,9 +24,9 @@ export class WthService {
     constructor(private readonly prisma: PrismaService) {}
 
     /** The list is light: no cards, only how many opponent cards each guide has. */
-    findAll() {
+    findAll(userId: string) {
         return this.prisma.wthGuide.findMany({
-            where: { ownerId: DEMO_USER_ID },
+            where: { ownerId: userId },
             orderBy: { opponentDeckName: 'asc' },
             select: {
                 id: true,
@@ -39,9 +38,9 @@ export class WthService {
         });
     }
 
-    async findOne(id: string) {
+    async findOne(userId: string, id: string) {
         const guide = await this.prisma.wthGuide.findFirst({
-            where: { id, ownerId: DEMO_USER_ID },
+            where: { id, ownerId: userId },
             include: guideInclude,
         });
         if (!guide) {
@@ -50,11 +49,11 @@ export class WthService {
         return guide;
     }
 
-    async create(dto: SaveWthGuideDto) {
-        const name = await this.validate(dto);
+    async create(userId: string, dto: SaveWthGuideDto) {
+        const name = await this.validate(userId, dto);
         return this.prisma.wthGuide.create({
             data: {
-                ownerId: DEMO_USER_ID,
+                ownerId: userId,
                 opponentDeckName: name,
                 notes: emptyToNull(dto.notes),
                 entries: { create: this.entriesData(dto) },
@@ -63,9 +62,9 @@ export class WthService {
         });
     }
 
-    async update(id: string, dto: SaveWthGuideDto) {
-        await this.findOne(id); // 404 if it is not ours
-        const name = await this.validate(dto, id);
+    async update(userId: string, id: string, dto: SaveWthGuideDto) {
+        await this.findOne(userId, id); // 404 if it is not ours
+        const name = await this.validate(userId, dto, id);
         // All or nothing: old rows out, new rows in
         const [, updated] = await this.prisma.$transaction([
             this.prisma.wthEntry.deleteMany({ where: { guideId: id } }),
@@ -82,8 +81,8 @@ export class WthService {
         return updated;
     }
 
-    async remove(id: string) {
-        await this.findOne(id);
+    async remove(userId: string, id: string) {
+        await this.findOne(userId, id);
         await this.prisma.wthGuide.delete({ where: { id } });
     }
 
@@ -99,7 +98,7 @@ export class WthService {
     }
 
     /** Returns the trimmed name if everything is valid, otherwise throws. */
-    private async validate(dto: SaveWthGuideDto, excludeId?: string) {
+    private async validate(userId: string, dto: SaveWthGuideDto, excludeId?: string) {
         const name = dto.opponentDeckName.trim();
         if (name === '') {
             throw new BadRequestException('The Opponent Deck Name is mandatory');
@@ -127,7 +126,7 @@ export class WthService {
 
         const sameName = await this.prisma.wthGuide.findFirst({
             where: {
-                ownerId: DEMO_USER_ID,
+                ownerId: userId,
                 opponentDeckName: { equals: name, mode: 'insensitive' },
                 ...(excludeId ? { NOT: { id: excludeId } } : {}),
             },
