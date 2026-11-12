@@ -1,5 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
+import { csrfProtection } from './auth/csrf';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -11,6 +13,8 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  app.use(cookieParser());
+  app.use(csrfProtection);
   await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();

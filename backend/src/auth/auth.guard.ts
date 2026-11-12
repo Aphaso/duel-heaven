@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
-import { bearerToken } from './auth-utils';
+import { SESSION_COOKIE } from './session-cookie';
 
 export type AuthenticatedRequest = Request & { userId?: string };
 
@@ -11,7 +11,7 @@ export class AuthGuard implements CanActivate {
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-        const token = bearerToken(request.headers.authorization);
+        const token = request.cookies?.[SESSION_COOKIE] as string | undefined;
         if (!token) {
             throw new UnauthorizedException('Required Access');
         }
