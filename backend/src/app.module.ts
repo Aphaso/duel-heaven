@@ -10,6 +10,7 @@ import { SidePatternsModule } from './side-patterns/side-patterns.module';
 import { WthModule } from './wth/wth.module';
 import { CombosModule } from './combos/combos.module';
 import { PlaylistsModule } from './playlists/playlists.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { PlaylistsModule } from './playlists/playlists.module';
     WthModule,
     CombosModule,
     PlaylistsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
