@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuth } from './useAuth';
+import { sectionRoot } from './redirect';
 
 /** Layoute route: show children pages only to logged user */
 export function RequireAuth() {
@@ -21,7 +22,7 @@ export function RequireAuth() {
     }
     if (status === 'anonymous') {
         // Save where the user wanted to go to, so it can go back there after login
-        const from = location.pathname + location.search;
+        const from = sectionRoot(location.pathname);
         return <Navigate to="/login" replace state={{ from }}></Navigate>;
     }
     return <Outlet></Outlet>;
