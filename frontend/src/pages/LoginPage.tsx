@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { useMutation } from '@tanstack/react-query';
 import { login } from '../auth/authApi';
 import { useAuth } from '../auth/useAuth';
+import { GoogleAccess } from '../auth/GoogleAccess';
 
 export default function LoginPage() {
     const { status, signIn } = useAuth();
@@ -72,6 +73,10 @@ export default function LoginPage() {
                     {mutation.isPending ? 'Logging in...' : 'Log in'}
                 </button>
             </form>
+            <div className='flex items-center gap-3 text-xs text-gray-500'>
+                <hr className='flex-1'></hr>or<hr className='flex-1'></hr>
+            </div>
+            <GoogleAccess redirectTo={from}></GoogleAccess>
             <p className="text-sm">
                 No account? <Link to="/register" className="underline">Register</Link>
             </p>

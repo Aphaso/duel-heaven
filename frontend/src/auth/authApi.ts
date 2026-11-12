@@ -16,6 +16,10 @@ export type RegisterInput = {
     displayName: string;
 };
 
+export type GoogleLoginResult =
+    | { status: 'authenticated'; user: AuthUser }
+    | { status: 'signup'; signupToken: string; name: string; email: string };
+
 export const register = (data: RegisterInput) =>
     request<AuthResult>('/api/auth/register', jsonBody('POST', data));
 
@@ -33,6 +37,10 @@ export async function fetchMe(): Promise<AuthUser | null> {
 }
 
 export const checkUsername = (username: string) =>
-    request<{ available: boolean }>(
-        `/api/auth/username-available?username=${encodeURIComponent(username)}`,
-    )
+    request<{ available: boolean }>(`/api/auth/username-available?username=${encodeURIComponent(username)}`,);
+
+export const googleLogin = (credential: string) =>
+    request<GoogleLoginResult>('/api/auth/google', jsonBody('POST', { credential }));
+
+export const googleComplete = (data: { signupToken: string; username: string }) =>
+    request<AuthResult>('/api/auth/googl/complete', jsonBody('POST', data));

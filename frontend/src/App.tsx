@@ -14,6 +14,7 @@ import PlaylistEditPage from './pages/PlaylistEditPage';
 import PlaylistPage from './pages/PlaylistPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import GoogleSignupPage from './pages/GoogleSignupPage';
 
 function navClass({ isActive }: { isActive: boolean }) {
   return isActive
@@ -57,6 +58,7 @@ function Layout() {
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage></LoginPage> },
   { path: '/register', element: <RegisterPage></RegisterPage> },
+  { path: '/register/google', element: <GoogleSignupPage></GoogleSignupPage> },
   {
     element: <RequireAuth></RequireAuth>,
     children: [

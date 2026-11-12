@@ -1,12 +1,10 @@
 import { useState, type SyntheticEvent} from 'react';
 import { Link, Navigate, useNavigate } from 'react-router';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { checkUsername, register } from '../auth/authApi';
+import { useMutation } from '@tanstack/react-query';
+import { register } from '../auth/authApi';
 import { useAuth } from '../auth/useAuth';
-import { useDebounce } from '../hooks/useDebounce';
-
-const USERNAME_MIN = 3;
-const USERNAME_MAX = 20;
+import { useUsernameCheck } from '../hooks/useUsernameCheck';
+import { GoogleAccess } from '../auth/GoogleAccess';
 
 export default function RegisterPage() {
     const { status, signIn } = useAuth();
@@ -17,17 +15,7 @@ export default function RegisterPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const candidate = username.trim();
-    const debounce = useDebounce(candidate, 400);
-    const lengthOk = candidate.length >= USERNAME_MIN && candidate.length <= USERNAME_MAX;
-
-    // Check for availability only after the user stopped typing
-    const availability = useQuery({
-        queryKey: ['username-available', debounce],
-        queryFn: () => checkUsername(debounce),
-        enabled: debounce.length >= USERNAME_MIN && debounce.length <= USERNAME_MAX,
-        staleTime: 10_000,
-    });
+    const { candidate, lengthOk, taken, hint: usernameHint } = useUsernameCheck(username);
 
     const mutation = useMutation({
         mutationFn: register,
@@ -42,8 +30,6 @@ export default function RegisterPage() {
     }
 
     // Result is valid only if it concerns the name currently in the field
-    const checking = lengthOk && (debounce !== candidate || availability.isFetching);
-    const taken = lengthOk && !checking && availability.data?.available === false;
     const canSubmit =
         displayName.trim() !== '' &&
         lengthOk &&
@@ -52,17 +38,6 @@ export default function RegisterPage() {
         password.length >= 8 &&
         !mutation.isPending;
     
-    let usernameHint = `${USERNAME_MIN}-${USERNAME_MAX} characters`;
-    if (candidate !== '' && !lengthOk) {
-        usernameHint = `Must be ${USERNAME_MIN}-${USERNAME_MAX} characters`;
-    } else if (checking) {
-        usernameHint = 'Checking...';
-    } else if (taken) {
-        usernameHint = 'Username already taken';
-    } else if (lengthOk && availability.data?.available) {
-        usernameHint = 'Available';
-    }
-
     function onSubmit(e: SyntheticEvent<HTMLFormElement>) {
         e.preventDefault();
         mutation.mutate({
@@ -139,6 +114,10 @@ export default function RegisterPage() {
                     {mutation.isPending ? 'Creating…' : 'Create account'}
                 </button>
             </form>
+            <div className='flex items-center gap-3 text-xs text-gray-500'>
+                <hr className='flex-1'></hr>or<hr className='flex-1'></hr>
+            </div>
+            <GoogleAccess redirectTo='/'></GoogleAccess>
             <p className="text-sm">
                 Already registered? <Link to="/login" className="underline">Log in</Link>
             </p>
