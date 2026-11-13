@@ -2,7 +2,7 @@ import { BadRequestException, Controller, Headers, HttpCode, Post, Req, type Raw
 import type { Request } from 'express';
 import type Stripe from 'stripe';
 import { CheckoutService } from './checkout.service';
-import { StripeService } from './stripe.service';
+import { StripeService } from '../stripe/stripe.service';
 
 @Controller('stripe')
 export class StripeWebhookController {

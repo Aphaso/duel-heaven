@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import type Stripe from 'stripe';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { StripeService } from './stripe.service';
+import { StripeService } from '../stripe/stripe.service';
 
 @Injectable()
 export class CheckoutService {

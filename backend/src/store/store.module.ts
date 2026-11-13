@@ -4,11 +4,11 @@ import { StoreController } from './store.controller';
 import { StripeWebhookController } from './stripe-webhook.controller';
 import { StoreService } from './store.service';
 import { CheckoutService } from './checkout.service';
-import { StripeService } from './stripe.service';
+import { StripeModule } from '../stripe/stripe.module';
 
 @Module({
-    imports: [AuthModule],
+    imports: [AuthModule, StripeModule],
     controllers: [StoreController, StripeWebhookController],
-    providers: [StoreService, CheckoutService, StripeService],
+    providers: [StoreService, CheckoutService],
 })
 export class StoreModule {}

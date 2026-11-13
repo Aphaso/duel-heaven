@@ -13,6 +13,7 @@ import { PlaylistsModule } from './playlists/playlists.module';
 import { AuthModule } from './auth/auth.module';
 import { StoreModule } from './store/store.module';
 import { PurchasesModule } from './purchases/purchases.module';
+import { ConnectModule } from './connect/connect.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { PurchasesModule } from './purchases/purchases.module';
     AuthModule,
     StoreModule,
     PurchasesModule,
+    ConnectModule,
   ],
   controllers: [AppController],
   providers: [AppService],

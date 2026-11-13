@@ -41,20 +41,21 @@ model Card {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String?  @unique
-  username     String?  @unique
-  displayName  String?
-  passwordHash String?
-  googleId     String?  @unique
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(cuid())
+  email           String?  @unique
+  username        String?  @unique
+  displayName     String?
+  passwordHash    String?
+  googleId        String?  @unique
+  stripeAccountId String? @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  decks        Deck[]
-  wthGuides    WthGuide[]
-  combos       Combo[]
-  playlists    Playlist[]
-  purchases    Purchase[]
+  decks           Deck[]
+  wthGuides       WthGuide[]
+  combos          Combo[]
+  playlists       Playlist[]
+  purchases       Purchase[]
 }
 
 enum DeckSection {
@@ -239,6 +240,7 @@ model Purchase {
   stripeSessionId String   @unique
   amountCents     Int
   currency        String
+  feeCents        Int      @default(0) // Fee imposed by the platform on this purchase
   createdAt       DateTime @default(now())
 
   @@unique([buyerId, playlistId])
