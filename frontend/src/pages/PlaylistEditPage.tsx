@@ -30,6 +30,7 @@ function PlaylistEditScreen({ id }: { id: string | undefined }) {
         onSuccess: async (saved) => {
             queryClient.setQueryData(['playlist', saved.id], saved);
             await queryClient.invalidateQueries({ queryKey: ['playlists'] });
+            await queryClient.invalidateQueries({ queryKey: ['store'] });
             navigate(`/playlists/${saved.id}`, { replace: true });
         },
     });
@@ -56,6 +57,7 @@ function PlaylistEditScreen({ id }: { id: string | undefined }) {
                     <div className='mt-4'>
                         <PlaylistEditor
                             initial={playlist ? draftFromPlaylist(playlist) : emptyPlaylistDraft()}
+                            buyers={playlist?._count.purchases ?? 0}
                             saving={save.isPending}
                             error={save.isError ? save.error.message : null}
                             onSave={(draft) => save.mutate(draft)}

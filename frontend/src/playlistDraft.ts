@@ -1,3 +1,4 @@
+import { centsToInput, parsePriceToCents, priceProblem } from './price';
 import type { ComboSummary, Playlist, PlaylistPayload } from './types';
 
 /** Same limit as the backend (SavePlaylistDto). The backend stays the authority. */
@@ -9,10 +10,14 @@ export interface PlaylistDraft {
     description: string;
     /** The combos of the playlist, in playing order. */
     combos: ComboSummary[];
+    /** Sold in the Store? */
+    forSale: boolean;
+    /** The price as the user types it; only meaningful when forSale. */
+    price: string;
 }
 
 export function emptyPlaylistDraft(): PlaylistDraft {
-    return { name: '', description: '', combos: [] };
+    return { name: '', description: '', combos: [], forSale: false, price: '' };
 }
 
 export function draftFromPlaylist(playlist: Playlist): PlaylistDraft {
@@ -20,6 +25,8 @@ export function draftFromPlaylist(playlist: Playlist): PlaylistDraft {
         name: playlist.name,
         description: playlist.description ?? '',
         combos: playlist.combos.map((row) => row.combo),
+        forSale: playlist.isForSale,
+        price: playlist.priceCents !== null ? centsToInput(playlist.priceCents) : '',
     };
 }
 
@@ -54,14 +61,32 @@ export function availableCombos(all: ComboSummary[], draft: PlaylistDraft): Comb
 }
 
 export function playlistProblems(draft: PlaylistDraft): string[] {
-    return draft.name.trim() === '' ? ['Write a name for the Playlist'] : [];
+    const problems: string[] = [];
+    if (draft.name.trim() === '') {
+        problems.push('Write a name for the Playlist');
+    }
+    if (draft.forSale) {
+        if (draft.combos.length === 0) {
+            problems.push('A playlist for sale needs at least one Combo');
+        }
+        const problem = priceProblem(parsePriceToCents(draft.price));
+        if (problem) {
+            problems.push(problem);
+        }
+    }
+    return problems;
 }
 
 /** Same content AND same order (the order is saved, so a different order is a change). */
 export function isSamePlaylistDraft(a: PlaylistDraft, b: PlaylistDraft): boolean {
+    const samePricing =
+        a.forSale === b.forSale &&
+        // The price only counts while the playlist is for sale;
+        (!a.forSale || parsePriceToCents(a.price) === parsePriceToCents(b.price));
     return (
         a.name.trim() === b.name.trim() &&
         a.description.trim() === b.description.trim() &&
+        samePricing &&
         a.combos.length === b.combos.length &&
         a.combos.every((c, i) => c.id === b.combos[i]!.id)
     );
@@ -73,5 +98,7 @@ export function toPlaylistPayload(draft: PlaylistDraft): PlaylistPayload {
         name: draft.name.trim(),
         description: description === '' ? null : description,
         comboIds: draft.combos.map((c) => c.id),
+        isForSale: draft.forSale,
+        priceCents: draft.forSale ? parsePriceToCents(draft.price) : null,
     };
 }

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { listPlaylists } from '../api';
+import { formatPrice } from '../price';
 
 export default function PlaylistListPage() {
     const playlists = useQuery({ queryKey: ['playlists'], queryFn: listPlaylists });
@@ -26,6 +27,14 @@ export default function PlaylistListPage() {
                             <span className='ml-2 text-sm text-gray-500'>
                                 {p._count.combos} combo{p._count.combos === 1 ? '' : 's'}
                             </span>
+                            {p.isForSale && p.priceCents !== null && (
+                                <span className='ml-2 rounded bg-green-100 px-2 py-0.5 text-xs text-green-800'>
+                                    For sale · {formatPrice(p.priceCents)}
+                                </span>
+                            )}
+                            {p._count.purchases > 0 && (
+                                <span className='ml-2 text-xs text-gray-500'>{p._count.purchases} sold</span>
+                            )}
                             {p.description && <p className='text-sm text-gray-600'>{p.description}</p>}
                         </Link>
                     </li>

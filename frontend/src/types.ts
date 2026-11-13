@@ -174,7 +174,9 @@ export interface PlaylistSummary {
     name: string;
     description: string | null;
     updatedAt: string;
-    _count: { combos: number };
+    isForSale: boolean;
+    priceCents: number | null;
+    _count: { combos: number; purchases: number };
 }
 
 export interface PlaylistComboRow {
@@ -190,6 +192,9 @@ export interface Playlist {
     description: string | null;
     createdAt: string;
     updatedAt: string;
+    isForSale: boolean;
+    priceCents: number | null;
+    _count: { purchases: number };
     combos: PlaylistComboRow[];
 }
 
@@ -197,6 +202,8 @@ export interface PlaylistPayload {
     name: string;
     description: string | null;
     comboIds: string[];
+    isForSale: boolean;
+    priceCents: number | null;
 }
 
 export type StoreListing = {

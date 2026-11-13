@@ -13,13 +13,14 @@ import {
 
 interface Props {
     initial: PlaylistDraft;
+    buyers: number;
     saving: boolean;
     error: string | null;
     onSave: (draft: PlaylistDraft) => void;
     onDirtyChange: (dirty: boolean) => void;
 }
 
-export default function PlaylistEditor({ initial, saving, error, onSave, onDirtyChange }: Props) {
+export default function PlaylistEditor({ initial, buyers, saving, error, onSave, onDirtyChange }: Props) {
     const [draft, setDraft] = useState<PlaylistDraft>(initial);
 
     const dirty = !isSamePlaylistDraft(draft, initial);
@@ -56,6 +57,38 @@ export default function PlaylistEditor({ initial, saving, error, onSave, onDirty
                     />
                 </label>
             </div>
+
+            <section className='space-y-2 rounded border p-3'>
+                <label className='flex items-center gap-2 text-sm font-semibold'>
+                    <input
+                        type='checkbox'
+                        checked={draft.forSale}
+                        onChange={(e) => setDraft({ ...draft, forSale: e.target.checked })}
+                    >
+                    </input>
+                    Sell this Playlist in the Store
+                </label>
+                {draft.forSale && (
+                    <label className='block text-sm'>
+                        Price (EUR)
+                        <input
+                            value={draft.price}
+                            onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+                            inputMode='decimal'
+                            placeholder='4.99'
+                            className='mt-1 block w-32 rounded border px-2 py-1'
+                        >
+                        </input>
+                    </label>
+                )}
+                {buyers > 0 && (
+                    <p className='text-sm text-gray-600'>
+                        {buyers} {buyers === 1 ? 'person bought' : 'people bought'} this Playlist. They always
+                        see your latest changes, including combos you remove, and a new price does not affect
+                        what they paid. If you delete it, they keep a frozen copy of its last version.
+                    </p>
+                )}
+            </section>
 
             <div className='grid gap-6 md:grid-cols-2'>
                 <section>

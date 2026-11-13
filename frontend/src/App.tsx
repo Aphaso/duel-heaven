@@ -20,6 +20,7 @@ import StoreListingPage from './pages/StoreListingPage';
 import PurchasesPage from './pages/PurchasesPage';
 import PurchaseSuccessPage from './pages/PurchaseSuccessPage';
 import PurchasedPlaylistPage from './pages/PurchasedPlaylistPage';
+import PurchasedComboPage from './pages/PurchasedComboPage';
 
 function navClass({ isActive }: { isActive: boolean }) {
   return isActive
@@ -92,6 +93,7 @@ const router = createBrowserRouter([
           { path: '/purchases', element: <PurchasesPage></PurchasesPage> },
           { path: '/purchases/success', element: <PurchaseSuccessPage></PurchaseSuccessPage> },
           { path: '/purchases/:playlistId', element: <PurchasedPlaylistPage></PurchasedPlaylistPage> },
+          { path: '/purchases/:playlistId/combos/:comboId', element: <PurchasedComboPage></PurchasedComboPage> },
           { path: '*', element: <p className='p-8'>Page Not Found.</p>}
         ],
       },

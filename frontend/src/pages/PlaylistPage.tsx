@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router';
 import { deletePlaylist, getCombo, getPlaylist } from '../api';
+import { formatPrice } from '../price';
 import ComboPlayer from '../components/ComboPlayer';
 
 export default function PlaylistPage() {
@@ -36,6 +37,7 @@ function PlaylistScreen({ id }: { id: string | undefined }) {
         mutationFn: () => deletePlaylist(id!),
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ['playlists'] });
+            await queryClient.invalidateQueries({ queryKey: ['store'] });
             navigate('/playlists');
         },
     });
@@ -57,6 +59,12 @@ function PlaylistScreen({ id }: { id: string | undefined }) {
                             {playlist.data.description && (
                                 <p className='mt-1 text-gray-700'>{playlist.data.description}</p>
                             )}
+                            {playlist.data.isForSale && playlist.data.priceCents !== null && (
+                                <p className='mt-1 text-sm text-green-800'>
+                                    For sale at {formatPrice(playlist.data.priceCents)}
+                                    {playlist.data._count.purchases > 0 && ` · ${playlist.data._count.purchases} sold`}
+                                </p>
+                            )}
                         </div>
                         <div className='flex gap-2'>
                             <Link to={`/playlists/${playlist.data.id}/edit`} className='rounded border px-3 py-1'>
@@ -66,7 +74,12 @@ function PlaylistScreen({ id }: { id: string | undefined }) {
                                 type='button'
                                 disabled={remove.isPending}
                                 onClick={() => {
-                                    if (window.confirm(`Delete the Playlist "${playlist.data.name}"? Its Combos are kept.`)) {
+                                    const buyers = playlist.data._count.purchases;
+                                    const message =
+                                        buyers > 0
+                                            ? `"${playlist.data.name}" has been bought by ${buyers} ${buyers === 1 ? 'person' : 'people'}. If you delete it, they keep a frozen copy of its last version, but it disappears for you and from the Store. Its Combos are kept. Delete anyway?`
+                                            : `Delete the Playlist "${playlist.data.name}"? Its Combos are kept.`;
+                                    if (window.confirm(message)) {
                                         remove.mutate();
                                     }
                                 }}
