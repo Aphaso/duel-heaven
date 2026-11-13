@@ -1,4 +1,4 @@
-import { ArrayMaxSize, ArrayUnique, IsArray, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { ArrayMaxSize, ArrayUnique, IsArray, IsOptional, IsString, IsBoolean, IsInt, Max, Min, MaxLength, MinLength } from 'class-validator';
 
 export class SavePlaylistDto {
     @IsString()
@@ -17,4 +17,14 @@ export class SavePlaylistDto {
     @ArrayUnique({ message: 'Duplicated Combo in the Playlist' })
     @IsString({ each: true })
     comboIds!: string[];
+
+    @IsOptional()
+    @IsBoolean()
+    isForSale?: boolean;
+
+    @IsOptional()
+    @IsInt()
+    @Min(50) // 0.50 €, minimum accepted Euro value by Stripe
+    @Max(50_000) // 500.00 €
+    priceCents?: number | null;
 }

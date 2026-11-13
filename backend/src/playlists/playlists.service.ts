@@ -3,6 +3,9 @@ import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SavePlaylistDto } from './save-playlist.dto';
 
+export const PRICE_MIN_CENTS = 50;
+export const PRICE_MAX_CENTS = 50_000;
+
 const playlistInclude = {
     combos: {
         orderBy: { position: 'asc' },
@@ -12,6 +15,7 @@ const playlistInclude = {
             },
         },
     },
+    _count: { select: { purchases: true } },
 } satisfies Prisma.PlaylistInclude;
 
 @Injectable()
@@ -20,21 +24,23 @@ export class PlaylistsService {
 
     findAll(userId: string) {
         return this.prisma.playlist.findMany({
-            where: { ownerId: userId },
+            where: { ownerId: userId, deletedAt: null },
             orderBy: { name: 'asc' },
             select: {
                 id: true,
                 name: true,
                 description: true,
                 updatedAt: true,
-                _count: { select: { combos: true } },
+                isForSale: true,
+                priceCents: true,
+                _count: { select: { combos: true, purchases: true } },
             },
         });
     }
 
     async findOne(userId: string, id: string) {
         const playlist = await this.prisma.playlist.findFirst({
-            where: { id, ownerId: userId },
+            where: { id, ownerId: userId, deletedAt: null },
             include: playlistInclude,
         });
         if (!playlist) {
@@ -50,6 +56,7 @@ export class PlaylistsService {
                 ownerId: userId,
                 name,
                 description: this.descriptionOf(dto),
+                ...this.saleOf(dto),
                 combos: { create: this.combosData(dto) },
             },
             include: playlistInclude,
@@ -57,7 +64,7 @@ export class PlaylistsService {
     }
 
     async update(userId: string, id: string, dto: SavePlaylistDto) {
-        await this.findOne(userId, id); // 404 if it is not ours
+        await this.findOne(userId, id); // 404 if it is not ours or it was deleted
         const name = await this.validate(userId, dto, id);
         // All or nothing: old links out, new ones in (the order is the position)
         const [, updated] = await this.prisma.$transaction([
@@ -67,6 +74,7 @@ export class PlaylistsService {
                 data: {
                     name,
                     description: this.descriptionOf(dto),
+                    ...this.saleOf(dto),
                     combos: { create: this.combosData(dto) },
                 },
                 include: playlistInclude,
@@ -75,10 +83,58 @@ export class PlaylistsService {
         return updated;
     }
 
-    /** Deletes the playlist and its links: the combos are NOT deleted. */
+    /** 
+     * Deletes the playlist. The combos are not deleted.
+     * - Nobody bought it: real deletion.
+     * - Someone bought it: the buyers must keep what they paid for, so we take a snapshot
+     *   of the playlist and its combos and only hide the playlist from the seller.
+     *   (The database also refuses to really delete a playlist with purchases)
+     */
     async remove(userId: string, id: string) {
         await this.findOne(userId, id);
-        await this.prisma.playlist.delete({ where: { id } });
+        
+        const purchases = await this.prisma.purchase.count({ where: { playlistId: id} });
+        if (purchases === 0) {
+            await this.prisma.playlist.delete({ where: { id } });
+            return;
+        }
+
+        const snapshot = await this.buildSnapshot(id);
+        await this.prisma.$transaction([
+            this.prisma.playlistCombo.deleteMany({ where: { playlistId: id } }),
+            this.prisma.playlist.update({
+                where: { id },
+                data: { deletedAt: new Date(), isForSale: false, snapshot },
+            }),
+        ]);
+    }
+
+    /** Playlist + full combos (with cards) as plain JSON */
+    private async buildSnapshot(id: string): Promise<Prisma.InputJsonValue> {
+        const full = await this.prisma.playlist.findFirstOrThrow({
+            where: { id },
+            select: {
+                name: true,
+                description: true,
+                combos: {
+                    orderBy: { position: 'asc' },
+                    select: {
+                        combo: {
+                            include: {
+                                cards: { orderBy: { position: 'asc' }, include: { card: true } },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+        const data = {
+            name: full.name,
+            description: full.description,
+            combos: full.combos.map((c) => c.combo),
+        };
+        // The database stores plain JSON
+        return JSON.parse(JSON.stringify(data)) as Prisma.InputJsonValue;
     }
 
     private combosData(dto: SavePlaylistDto) {
@@ -90,11 +146,36 @@ export class PlaylistsService {
         return description === '' ? null : description;
     }
 
+    /**
+     * - Not for sale = no price.
+     * - For sale = the already validated price.
+     */
+    private saleOf(dto: SavePlaylistDto) {
+        const isForSale = dto.isForSale === true;
+        return { isForSale, priceCents: isForSale ? (dto.priceCents ?? null) : null };
+    }
+
     /** Returns the trimmed name if everything is valid, otherwise throws. */
     private async validate(userId: string, dto: SavePlaylistDto, excludeId?: string) {
         const name = dto.name.trim();
         if (name === '') {
             throw new BadRequestException('Playlist name is mandatory');
+        }
+
+        if (dto.isForSale) {
+            if (dto.comboIds.length === 0) {
+                throw new BadRequestException('A playlist for sale must contain at least one combo');
+            }
+            const price = dto.priceCents;
+            if (
+                price === undefined ||
+                price === null ||
+                !Number.isInteger(price) ||
+                price < PRICE_MIN_CENTS ||
+                price > PRICE_MAX_CENTS
+            ) {
+                throw new BadRequestException(`The price must be between ${PRICE_MIN_CENTS / 100} and ${PRICE_MAX_CENTS / 100} EUR`);
+            }
         }
 
         // Only the user's own combos can go into a playlist
@@ -108,9 +189,11 @@ export class PlaylistsService {
             throw new BadRequestException(`Missing combos: ${missing.join(', ')}`);
         }
 
+        // Deleted playlists don't count, so their name is free again
         const sameName = await this.prisma.playlist.findFirst({
             where: {
                 ownerId: userId,
+                deletedAt: null,
                 name: { equals: name, mode: 'insensitive' },
                 ...(excludeId ? { NOT: { id: excludeId } } : {}),
             },

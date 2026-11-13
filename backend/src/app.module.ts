@@ -11,6 +11,7 @@ import { WthModule } from './wth/wth.module';
 import { CombosModule } from './combos/combos.module';
 import { PlaylistsModule } from './playlists/playlists.module';
 import { AuthModule } from './auth/auth.module';
+import { StoreModule } from './store/store.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AuthModule } from './auth/auth.module';
     CombosModule,
     PlaylistsModule,
     AuthModule,
+    StoreModule,
   ],
   controllers: [AppController],
   providers: [AppService],
