@@ -15,6 +15,11 @@ import PlaylistPage from './pages/PlaylistPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import GoogleSignupPage from './pages/GoogleSignupPage';
+import StorePage from './pages/StorePage';
+import StoreListingPage from './pages/StoreListingPage';
+import PurchasesPage from './pages/PurchasesPage';
+import PurchaseSuccessPage from './pages/PurchaseSuccessPage';
+import PurchasedPlaylistPage from './pages/PurchasedPlaylistPage';
 
 function navClass({ isActive }: { isActive: boolean }) {
   return isActive
@@ -36,6 +41,8 @@ function Layout() {
           <NavLink to='/wth' className={navClass}>WTH?</NavLink>
           <NavLink to='/combos' className={navClass}>Combos</NavLink>
           <NavLink to='/playlists' className={navClass}>Playlists</NavLink>
+          <NavLink to='/store' className={navClass}>Store</NavLink>
+          <NavLink to='/purchases' className={navClass}>Purchased</NavLink>
           <div className='ml-auto flex items-center gap-4 text-sm text-gray-600'>
             <span title={user?.displayName ?? undefined}>
               {user?.username ? `@${user.username}` : user?.email}
@@ -80,6 +87,11 @@ const router = createBrowserRouter([
           { path: '/playlists/new', element: <PlaylistEditPage></PlaylistEditPage> },
           { path: '/playlists/:id', element: <PlaylistPage></PlaylistPage> },
           { path: '/playlists/:id/edit', element: <PlaylistEditPage></PlaylistEditPage> },
+          { path: '/store', element: <StorePage></StorePage> },
+          { path: '/store/:id', element: <StoreListingPage></StoreListingPage> },
+          { path: '/purchases', element: <PurchasesPage></PurchasesPage> },
+          { path: '/purchases/success', element: <PurchaseSuccessPage></PurchaseSuccessPage> },
+          { path: '/purchases/:playlistId', element: <PurchasedPlaylistPage></PurchasedPlaylistPage> },
           { path: '*', element: <p className='p-8'>Page Not Found.</p>}
         ],
       },

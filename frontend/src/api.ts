@@ -1,4 +1,4 @@
-import { type Card, type Deck, type DeckDetail, type DeckSection, type Paginated, type SidePattern, type SidePatternPayload, type WthGuide, type WthGuideSummary, type WthPayload, type Combo, type ComboSummary, type ComboPayload, type Playlist, type PlaylistSummary, type PlaylistPayload } from './types';
+import { type Card, type Deck, type DeckDetail, type DeckSection, type Paginated, type SidePattern, type SidePatternPayload, type WthGuide, type WthGuideSummary, type WthPayload, type Combo, type ComboSummary, type ComboPayload, type Playlist, type PlaylistSummary, type PlaylistPayload, type StoreListing, type StoreListingDetail, type PurchasedPlaylistSummary, type PurchasedPlaylist } from './types';
 import { AUTH_EXPIRED_EVENT, CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from './auth/session';
 
 /** Generic call: handles backend errors and 204 responses (no-body response). */
@@ -179,4 +179,40 @@ export function updatePlaylist(id: string, data: PlaylistPayload) {
 
 export function deletePlaylist(id: string) {
     return request<void>(`/api/playlists/${id}`, { method: 'DELETE' });
+}
+
+/** ----------------------------------------------------------------- Store */
+
+export function listStore() {
+    return request<StoreListing[]>('/api/store/playlists');
+}
+
+export function getStoreListing(id: string) {
+    return request<StoreListingDetail>(`/api/store/playlists/${id}`);
+}
+
+/** Returns the address of the Stripe payment page. */
+export function startCheckout(id: string) {
+    return request<{ url: string }>(`/api/store/playlists/${id}/checkout`, { method: 'POST' });
+}
+
+export function confirmCheckout(sessionId: string) {
+    return request<{ purchased: boolean; playlistId: string | null }>(
+        '/api/store/checkout/confirm',
+        jsonBody('POST', { sessionId }),
+    );
+}
+
+/** ------------------------------------------------------------- Purchases */
+
+export function listPurchases() {
+    return request<PurchasedPlaylistSummary[]>('/api/purchases');
+}
+
+export function getPurchase(playlistId: string) {
+    return request<PurchasedPlaylist>(`/api/purchases/${playlistId}`);
+}
+
+export function getPurchasedCombo(playlistId: string, comboId: string) {
+    return request<Combo>(`/api/purchases/${playlistId}/combos/${comboId}`);
 }

@@ -198,3 +198,35 @@ export interface PlaylistPayload {
     description: string | null;
     comboIds: string[];
 }
+
+export type StoreListing = {
+    id: string;
+    name: string;
+    description: string | null;
+    priceCents: number; // Always present for playlists in the store
+    updatedAt: string;
+    seller: string | null;
+    comboCount: number;
+    isOwn: boolean;
+    purchased: boolean;
+};
+
+export type StoreListingDetail = Omit<StoreListing, 'comboCount'> & {
+    combos: { name: string; stepCount: number }[];
+};
+
+export type PurchasedPlaylistSummary = {
+    playlistId: string;
+    name: string;
+    description: string | null;
+    seller: string | null;
+    comboCount: number;
+    archived: boolean; // The seller deleted it: the buyer keeps the last version
+    purchasedAt: string;
+    amountCents: number;
+    currency: string;
+};
+
+export type PurchasedPlaylist = Omit<PurchasedPlaylistSummary, 'comboCount'> & {
+    combos: ComboSummary[];
+};
