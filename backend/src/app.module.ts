@@ -12,6 +12,7 @@ import { CombosModule } from './combos/combos.module';
 import { PlaylistsModule } from './playlists/playlists.module';
 import { AuthModule } from './auth/auth.module';
 import { StoreModule } from './store/store.module';
+import { PurchasesModule } from './purchases/purchases.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { StoreModule } from './store/store.module';
     PlaylistsModule,
     AuthModule,
     StoreModule,
+    PurchasesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
