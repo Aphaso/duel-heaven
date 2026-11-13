@@ -54,6 +54,7 @@ model User {
   wthGuides    WthGuide[]
   combos       Combo[]
   playlists    Playlist[]
+  purchases    Purchase[]
 }
 
 enum DeckSection {
@@ -206,8 +207,14 @@ model Playlist {
   name        String
   description String?
   combos      PlaylistCombo[]
+  isForSale   Boolean         @default(false)
+  priceCents  Int?            // In Euro cents, we don't use decimals
+  snapshot    Json?           // Frozen copy, only if the playlist had buyers when it was deleted
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+
+  purchases   Purchase[]
 
   @@unique([ownerId, name])
 }
@@ -221,4 +228,19 @@ model PlaylistCombo {
   position   Int
 
   @@unique([playlistId, comboId])
+}
+
+model Purchase {
+  id              String   @id @default(cuid())
+  buyerId         String
+  buyer           User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  playlistId      String
+  playlist        Playlist @relation(fields: [playlistId], references: [id], onDelete: Restrict)
+  stripeSessionId String   @unique
+  amountCents     Int
+  currency        String
+  createdAt       DateTime @default(now())
+
+  @@unique([buyerId, playlistId])
+  @@index([playlistId])
 }
