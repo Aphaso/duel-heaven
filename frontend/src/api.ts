@@ -1,4 +1,4 @@
-import { type Card, type Deck, type DeckDetail, type DeckSection, type Paginated, type SidePattern, type SidePatternPayload, type WthGuide, type WthGuideSummary, type WthPayload, type Combo, type ComboSummary, type ComboPayload, type Playlist, type PlaylistSummary, type PlaylistPayload, type StoreListing, type StoreListingDetail, type PurchasedPlaylistSummary, type PurchasedPlaylist } from './types';
+import { type Card, type Deck, type DeckDetail, type DeckSection, type Paginated, type SidePattern, type SidePatternPayload, type WthGuide, type WthGuideSummary, type WthPayload, type Combo, type ComboSummary, type ComboPayload, type Playlist, type PlaylistSummary, type PlaylistPayload, type StoreListing, type StoreListingDetail, type PurchasedPlaylistSummary, type PurchasedPlaylist, type ConnectStatus } from './types';
 import { AUTH_EXPIRED_EVENT, CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from './auth/session';
 
 /** Generic call: handles backend errors and 204 responses (no-body response). */
@@ -215,4 +215,18 @@ export function getPurchase(playlistId: string) {
 
 export function getPurchasedCombo(playlistId: string, comboId: string) {
     return request<Combo>(`/api/purchases/${playlistId}/combos/${comboId}`);
+}
+
+/** --------------------------------------------------------------- Connect */
+
+export function getConnectStatus() {
+    return request<ConnectStatus>('/api/connect/status');
+}
+
+/**
+ * Returns the address of the Stripe page where
+ * the seller enters their details.
+ */
+export function startOnboarding() {
+    return request<{ url: string }>('/api/connect/onboarding', { method: 'POST' });
 }

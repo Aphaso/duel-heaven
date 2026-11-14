@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { listCombos } from '../api';
+import { getConnectStatus, listCombos } from '../api';
 import {
     addCombo,
     availableCombos,
@@ -33,6 +34,12 @@ export default function PlaylistEditor({ initial, buyers, saving, error, onSave,
     }, [dirty, onDirtyChange]);
 
     const combos = useQuery({ queryKey: ['combos'], queryFn: listCombos });
+    // Only asked when the user wants to sell
+    const connect = useQuery({
+        queryKey: ['connect-status'],
+        queryFn: getConnectStatus,
+        enabled: draft.forSale,
+    });
     const available = availableCombos(combos.data ?? [], draft);
 
     return (
@@ -69,17 +76,27 @@ export default function PlaylistEditor({ initial, buyers, saving, error, onSave,
                     Sell this Playlist in the Store
                 </label>
                 {draft.forSale && (
-                    <label className='block text-sm'>
-                        Price (EUR)
-                        <input
-                            value={draft.price}
-                            onChange={(e) => setDraft({ ...draft, price: e.target.value })}
-                            inputMode='decimal'
-                            placeholder='4.99'
-                            className='mt-1 block w-32 rounded border px-2 py-1'
-                        >
-                        </input>
-                    </label>
+                    <div>
+                        <label className='block text-sm'>
+                            Price (EUR)
+                            <input
+                                value={draft.price}
+                                onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+                                inputMode='decimal'
+                                placeholder='4.99'
+                                className='mt-1 block w-32 rounded border px-2 py-1'
+                            >
+                            </input>
+                        </label>
+                        {connect.data && !connect.data.ready && (
+                            <p className='mt-2 text-sm text-amber-700'>
+                                You cannot sell yet: set up your payments account first.{' '}
+                                <Link to='/account/payments' className='underline'>
+                                    Go to Payments
+                                </Link>
+                            </p>
+                        )}
+                    </div>
                 )}
                 {buyers > 0 && (
                     <p className='text-sm text-gray-600'>

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { StripeService } from '../stripe/stripe.service';
+import { PLATFORM_FEE_PERCENT } from '../store/fees';
 
 @Injectable()
 export class ConnectService {
@@ -19,7 +20,7 @@ export class ConnectService {
     private async ensureAccountId(userId: string): Promise<string> {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
-            select: { stripeAccountId: true, username: true },
+            select: { stripeAccountId: true, username: true, email: true },
         });
         if (!user) {
             throw new NotFoundException('User not found');
@@ -27,10 +28,13 @@ export class ConnectService {
         if (user.stripeAccountId) {
             return user.stripeAccountId;
         }
+        if (!user.email) {
+            throw new BadRequestException('Your account has no email: add one before connecting payments');
+        }
 
         const account = await this.stripe.client.v2.core.accounts.create({
-            // We do not send the user's email: Stripe collects what it needs during onboarding
             display_name: user.username ?? 'Duel Heaven seller',
+            contact_email: user.email,
             dashboard: 'express',
             defaults: {
                 currency: 'eur',
@@ -99,7 +103,7 @@ export class ConnectService {
             where: { id: userId },
             select: { stripeAccountId: true },
         });
-        return { connected: !!user?.stripeAccountId, ready: await this.isReady(userId) };
+        return { connected: !!user?.stripeAccountId, ready: await this.isReady(userId), feePercent: PLATFORM_FEE_PERCENT };
     }
 
     /** Throws a clear message if the user cannot sell. */

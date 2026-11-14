@@ -30,7 +30,7 @@ export function useUsernameCheck(username: string) {
     } else if (taken) {
         hint = 'Already taken';
     } else if (available) {
-        hint = 'Available;'
+        hint = 'Available';
     }
 
     return { candidate, lengthOk, checking, taken, available, hint };

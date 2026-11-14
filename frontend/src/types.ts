@@ -237,3 +237,9 @@ export type PurchasedPlaylistSummary = {
 export type PurchasedPlaylist = Omit<PurchasedPlaylistSummary, 'comboCount'> & {
     combos: ComboSummary[];
 };
+
+export type ConnectStatus = {
+    connected: boolean; // Has a Stripe Account
+    ready: boolean; // The account can receive payments
+    feePercent: number; // What the platform keeps on every sale
+};
