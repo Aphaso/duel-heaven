@@ -5,9 +5,10 @@ import { StripeWebhookController } from './stripe-webhook.controller';
 import { StoreService } from './store.service';
 import { CheckoutService } from './checkout.service';
 import { StripeModule } from '../stripe/stripe.module';
+import { ConnectModule } from '../connect/connect.module';
 
 @Module({
-    imports: [AuthModule, StripeModule],
+    imports: [AuthModule, StripeModule, ConnectModule],
     controllers: [StoreController, StripeWebhookController],
     providers: [StoreService, CheckoutService],
 })

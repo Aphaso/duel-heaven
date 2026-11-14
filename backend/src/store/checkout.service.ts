@@ -4,6 +4,8 @@ import type Stripe from 'stripe';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { StripeService } from '../stripe/stripe.service';
+import { ConnectService } from '../connect/connect.service';
+import { platformFeeCents } from './fees';
 
 @Injectable()
 export class CheckoutService {
@@ -13,6 +15,7 @@ export class CheckoutService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly stripe: StripeService,
+        private readonly connect: ConnectService,
         config: ConfigService,
     ) {
         this.frontendUrl = config.getOrThrow<string>('FRONTEND_URL');
@@ -22,7 +25,13 @@ export class CheckoutService {
     async createSession(userId: string, playlistId: string) {
         const playlist = await this.prisma.playlist.findFirst({
             where: { id: playlistId, isForSale: true, deletedAt: null },
-            select: { id: true, name: true, ownerId: true, priceCents: true },
+            select: {
+                id: true,
+                name: true,
+                ownerId: true,
+                priceCents: true,
+                owner: { select: { stripeAccountId: true } },
+            },
         });
         if (!playlist || playlist.priceCents === null) {
             throw new NotFoundException('Playlist not found');
@@ -38,6 +47,12 @@ export class CheckoutService {
             throw new ConflictException('You already own this Playlist');
         }
 
+        const sellerAccountId = playlist.owner.stripeAccountId;
+        if (!sellerAccountId || !(await this.connect.isReady(playlist.ownerId))) {
+            throw new ConflictException('The Seller cannot receive payments right now');
+        }
+        const fee = platformFeeCents(playlist.priceCents);
+
         const session = await this.stripe.client.checkout.sessions.create({
             mode: 'payment',
             line_items: [
@@ -50,8 +65,13 @@ export class CheckoutService {
                     },
                 },
             ],
+            // The money goes to the seller; the platform keeps its fee
+            payment_intent_data: {
+                application_fee_amount: fee,
+                transfer_data: { destination: sellerAccountId },
+            },
             // Who is buying what: we read it back when the payment is confirmed
-            metadata: { playlistId: playlist.id, buyerId: userId },
+            metadata: { playlistId: playlist.id, buyerId: userId, feeCents: String(fee) },
             client_reference_id: userId,
             success_url: `${this.frontendUrl}/purchases/success/?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${this.frontendUrl}/store/${playlist.id}`,
@@ -62,7 +82,7 @@ export class CheckoutService {
         return { url: session.url };
     }
 
-    /** Called by the return page: asks Strupe directly how the payment went */
+    /** Called by the return page: asks Stripe directly how the payment went */
     async confirm(userId: string, sessionId: string) {
         let session: Stripe.Checkout.Session;
         try {
@@ -110,6 +130,8 @@ export class CheckoutService {
                     // The amount actually paid, not the current price
                     amountCents: session.amount_total ?? 0,
                     currency: session.currency ?? 'eur',
+                    // What the platform kept on this sale
+                    feeCents: Number(session.metadata?.feeCents ?? 0) || 0,
                 },
             });
         } catch (e) {

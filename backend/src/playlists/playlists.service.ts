@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { ConnectService } from '../connect/connect.service';
 import { SavePlaylistDto } from './save-playlist.dto';
 
 export const PRICE_MIN_CENTS = 50;
@@ -20,7 +21,10 @@ const playlistInclude = {
 
 @Injectable()
 export class PlaylistsService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly connect: ConnectService,
+    ) {}
 
     findAll(userId: string) {
         return this.prisma.playlist.findMany({
@@ -176,6 +180,7 @@ export class PlaylistsService {
             ) {
                 throw new BadRequestException(`The price must be between ${PRICE_MIN_CENTS / 100} and ${PRICE_MAX_CENTS / 100} EUR`);
             }
+            await this.connect.assertCanSell(userId);
         }
 
         // Only the user's own combos can go into a playlist
