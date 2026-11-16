@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards, Body, HttpCode, Post } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Body, HttpCode, Post, Query } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUserId } from '../auth/current-user.decorator';
 import { StoreService } from './store.service';
@@ -14,8 +14,8 @@ export class StoreController {
     ) {}
 
     @Get('playlists')
-    list(@CurrentUserId() userId: string) {
-        return this.store.list(userId);
+    list(@CurrentUserId() userId: string, @Query('q') q: unknown, @Query('page') page: unknown) {
+        return this.store.list(userId, q, page);
     }
 
     @Get('playlists/:id')

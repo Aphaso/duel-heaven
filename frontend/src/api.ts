@@ -183,8 +183,12 @@ export function deletePlaylist(id: string) {
 
 /** ----------------------------------------------------------------- Store */
 
-export function listStore() {
-    return request<StoreListing[]>('/api/store/playlists');
+export function listStore(params: { q: string; page: number }) {
+    const query = new URLSearchParams({ page: String(params.page) });
+    if (params.q) {
+        query.set('q', params.q);
+    }
+    return request<Paginated<StoreListing>>(`/api/store/playlists?${query}`);
 }
 
 export function getStoreListing(id: string) {
