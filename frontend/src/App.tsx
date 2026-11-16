@@ -22,6 +22,7 @@ import PurchaseSuccessPage from './pages/PurchaseSuccessPage';
 import PurchasedPlaylistPage from './pages/PurchasedPlaylistPage';
 import PurchasedComboPage from './pages/PurchasedComboPage';
 import AccountPaymentsPage from './pages/AccountPaymentsPage';
+import AccountPage from './pages/AccountPage';
 import { SupportChat } from './SupportChat';
 
 function navClass({ isActive }: { isActive: boolean }) {
@@ -48,9 +49,9 @@ function Layout() {
           <NavLink to='/purchases' className={navClass}>Purchased</NavLink>
           <NavLink to='/account/payments' className={navClass}>Payments</NavLink>
           <div className='ml-auto flex items-center gap-4 text-sm text-gray-600'>
-            <span title={user?.displayName ?? undefined}>
+            <NavLink to='/account' end className={navClass} title={user?.displayName ?? undefined}>
               {user?.username ? `@${user.username}` : user?.email}
-            </span>
+            </NavLink>
             <button
               type='button'
               onClick={() => void signOut()}
@@ -98,6 +99,7 @@ const router = createBrowserRouter([
           { path: '/purchases/success', element: <PurchaseSuccessPage></PurchaseSuccessPage> },
           { path: '/purchases/:playlistId', element: <PurchasedPlaylistPage></PurchasedPlaylistPage> },
           { path: '/purchases/:playlistId/combos/:comboId', element: <PurchasedComboPage></PurchasedComboPage> },
+          { path: '/account', element: <AccountPage></AccountPage> },
           { path: '/account/payments', element: <AccountPaymentsPage></AccountPaymentsPage> },
           { path: '*', element: <p className='p-8'>Page Not Found.</p>}
         ],

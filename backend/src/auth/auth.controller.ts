@@ -22,7 +22,7 @@ export class AuthController {
     @Post('login')
     @HttpCode(200)
     async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-        const { accessToken, user } = await this.auth.login(dto);+
+        const { accessToken, user } = await this.auth.login(dto);
         setSessionCookie(res, accessToken);
         return { user };
     }

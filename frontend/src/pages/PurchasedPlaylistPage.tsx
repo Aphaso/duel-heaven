@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router';
 import { getPurchase } from '../api';
+import { sellerLabel } from '../seller';
 
 export default function PurchasedPlaylistPage() {
     const { playlistId = '' } = useParams();
@@ -24,10 +25,10 @@ export default function PurchasedPlaylistPage() {
         <main className='mx-auto max-w-3xl space-y-4 px-8 py-6'>
             <Link to='/purchases' className='text-sm underline'>← Purchased Playlists</Link>
             <h1 className='text-2xl font-semibold'>{p.name}</h1>
-            <p className='text-sm text-gray-600'>by @{p.seller}</p>
+            <p className='text-sm text-gray-600'>by {sellerLabel(p.seller)}</p>
             {p.archived && (
                 <p className='rounded bg-amber-50 p-3 text-sm text-amber-800'>
-                    The seller removed this Playlist. You keep the last version they published.
+                    The seller removed this Playlist or their account. You keep the last version they published.
                 </p>
             )}
             {p.description && <p>{p.description}</p>}

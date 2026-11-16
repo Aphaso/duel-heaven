@@ -67,7 +67,7 @@ export class PurchasesService {
                 playlistId: p.playlist.id,
                 name: p.playlist.name,
                 description: p.playlist.description,
-                seller: p.playlist.owner.username,
+                seller: p.playlist.owner?.username ?? null,
                 // After the seller deleted it, the combos are counted in the snapshot
                 comboCount: archived
                     ? readSnapshot(p.playlist.snapshot).combos.length
@@ -128,7 +128,7 @@ export class PurchasesService {
             playlistId: p.id,
             name: p.name,
             description: p.description,
-            seller: p.owner.username,
+            seller: p.owner?.username ?? null,
             archived,
             purchasedAt: purchase.createdAt,
             amountCents: purchase.amountCents,

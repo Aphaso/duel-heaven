@@ -43,4 +43,7 @@ export const googleLogin = (credential: string) =>
     request<GoogleLoginResult>('/api/auth/google', jsonBody('POST', { credential }));
 
 export const googleComplete = (data: { signupToken: string; username: string }) =>
-    request<AuthResult>('/api/auth/googl/complete', jsonBody('POST', data));
+    request<AuthResult>('/api/auth/google/complete', jsonBody('POST', data));
+
+export const deleteAccount = (confirmation: string) =>
+    request<void>('/api/account', jsonBody('DELETE', { confirmation }));

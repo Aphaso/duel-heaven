@@ -3,6 +3,7 @@ import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConnectService } from '../connect/connect.service';
 import { SavePlaylistDto } from './save-playlist.dto';
+import { buildPlaylistSnapshot } from './playlist-snapshot';
 
 export const PRICE_MIN_CENTS = 50;
 export const PRICE_MAX_CENTS = 50_000;
@@ -103,7 +104,7 @@ export class PlaylistsService {
             return;
         }
 
-        const snapshot = await this.buildSnapshot(id);
+        const snapshot = await buildPlaylistSnapshot(this.prisma, id);
         await this.prisma.$transaction([
             this.prisma.playlistCombo.deleteMany({ where: { playlistId: id } }),
             this.prisma.playlist.update({
@@ -111,34 +112,6 @@ export class PlaylistsService {
                 data: { deletedAt: new Date(), isForSale: false, snapshot },
             }),
         ]);
-    }
-
-    /** Playlist + full combos (with cards) as plain JSON */
-    private async buildSnapshot(id: string): Promise<Prisma.InputJsonValue> {
-        const full = await this.prisma.playlist.findFirstOrThrow({
-            where: { id },
-            select: {
-                name: true,
-                description: true,
-                combos: {
-                    orderBy: { position: 'asc' },
-                    select: {
-                        combo: {
-                            include: {
-                                cards: { orderBy: { position: 'asc' }, include: { card: true } },
-                            },
-                        },
-                    },
-                },
-            },
-        });
-        const data = {
-            name: full.name,
-            description: full.description,
-            combos: full.combos.map((c) => c.combo),
-        };
-        // The database stores plain JSON
-        return JSON.parse(JSON.stringify(data)) as Prisma.InputJsonValue;
     }
 
     private combosData(dto: SavePlaylistDto) {

@@ -47,8 +47,8 @@ export class CheckoutService {
             throw new ConflictException('You already own this Playlist');
         }
 
-        const sellerAccountId = playlist.owner.stripeAccountId;
-        if (!sellerAccountId || !(await this.connect.isReady(playlist.ownerId))) {
+        const sellerAccountId = playlist.owner?.stripeAccountId;
+        if (!playlist.ownerId || !sellerAccountId || !(await this.connect.isReady(playlist.ownerId))) {
             throw new ConflictException('The Seller cannot receive payments right now');
         }
         const fee = platformFeeCents(playlist.priceCents);

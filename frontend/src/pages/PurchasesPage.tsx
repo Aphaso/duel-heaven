@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { listPurchases } from '../api';
 import { formatPrice } from '../price';
+import { sellerLabel } from '../seller';
 
 export default function PurchasesPage() {
     const purchases = useQuery({ queryKey: ['purchases'], queryFn: listPurchases });
@@ -33,7 +34,7 @@ export default function PurchasesPage() {
                                 )}
                             </div>
                             <p className='text-sm text-gray-600'>
-                                by @{p.seller} · {p.comboCount} {p.comboCount === 1 ? 'combo' : 'combos'} ·
+                                by {sellerLabel(p.seller)} · {p.comboCount} {p.comboCount === 1 ? 'combo' : 'combos'} ·
                                 paid {formatPrice(p.amountCents, p.currency)} on{' '}
                                 {new Date(p.purchasedAt).toLocaleDateString('en-GB')}
                             </p>

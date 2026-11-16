@@ -128,4 +128,12 @@ export const FAQ: FaqEntry[] = [
     keywords: ['username', 'password', 'characters', 'requirements', 'rules', 'taken', 'available'],
     link: { label: 'Go to Register', to: '/register' },
   },
+  {
+    id: 'delete-account',
+    question: 'How do I delete my account?',
+    answer:
+      'Click your @username in the top bar to open your Account page, then use Delete Account at the bottom. Your decks, combos, guides and purchases are erased. Playlists that other people already bought stay available to them, without your name.',
+      keywords: ['delete my account', 'delete account', 'remove my account', 'close my account', 'delete my data', 'erase account'],
+      link: { label: 'Go to Account', to: '/account' },
+  },
 ];
