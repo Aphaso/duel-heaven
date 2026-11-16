@@ -101,6 +101,7 @@ function Slot({
     return (
         <div
             onClick={onClick}
+            data-keep-selection
             className={`relative aspect-square rounded border border-dashed bg-gray-50 ${
                 active ? 'border-blue-500' : 'border-gray-300'
             } ${onClick ? 'cursor-pointer hover:bg-blue-50' : ''}`}
@@ -202,6 +203,7 @@ export default function ComboBoard({
                 <h3 className='mb-1 text-xs font-semibold uppercase text-gray-500'>Hand</h3>
                 <div
                     onClick={onZoneClick ? () => onZoneClick('HAND') : undefined}
+                    data-keep-selection
                     className={`flex min-h-28 flex-wrap gap-2 rounded border bg-gray-50 p-2 ${
                         onZoneClick ? 'cursor-pointer hover:bg-blue-50' : ''
                     }`}

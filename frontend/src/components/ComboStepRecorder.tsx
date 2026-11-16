@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { cardImageUrl } from '../api';
 import ComboBoard from './ComboBoard';
 import { entriesOf, type ComboDraft } from '../comboDraft';
@@ -18,6 +18,22 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
     const [attaching, setAttaching] = useState(false);
     const [browsing, setBrowsing] = useState<Zone | null>(null);
     const [message, setMessage] = useState<string | null>(null);
+
+    // A click anywhere outside the cards, the zones and the panels of the selected card deselects it.
+    // The areas to keep are marked with the attribute data-keep-selection
+    useEffect(() => {
+        function onClick(event: MouseEvent) {
+            // composedPath() is the path of the click as it was when it happened.
+            // It still works if React has already replaced the element that was clicked.
+            const inside = event.composedPath().some((node) => node instanceof Element && node.hasAttribute('data-keep-selection'));
+            if (!inside) {
+                setSelectedId(null);
+                setAttaching(false);
+            }
+        }
+        document.addEventListener('click', onClick);
+        return () => document.removeEventListener('click', onClick);
+    }, []);
 
     const cards = useMemo(
         () => new Map<number, Card>(draft.cards.map((c) => [c.card.id, c.card])),
@@ -41,7 +57,7 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
     const materials = display && selectedCard ? materialsOf(display, selectedCard.id) : [];
     const browsed = display && browsing ? display.filter((c) => c.zone === browsing) : [];
 
-    function addMove(move: Move) {
+    function addMove(move: Move, deselect = true) {
         if (!base) {
             return;
         }
@@ -52,6 +68,9 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
         }
         setMessage(null);
         setAttaching(false);
+        if (deselect) {
+            setSelectedId(null);
+        }
         setPending({ ...pending, moves: r.moves });
     }
 
@@ -143,7 +162,7 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
 
                         {message && <p className='text-sm text-red-700'>{message}</p>}
 
-                        <div className='rounded border p-3'>
+                        <div className='rounded border p-3' data-keep-selection>
                             {selectedCard ? (
                                 <div className='space-y-2'>
                                     <p className='text-sm'>
@@ -228,12 +247,13 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
                                 <p className='text-sm text-gray-500'>
                                     Click a card to select it, then click the zone where it goes. Click the
                                     Deck, the Extra Deck, the Graveyard or the Banished pile to see its cards.
+                                    Click anywhere else to deselect.
                                 </p>
                             )}
                         </div>
 
                         {browsing && (
-                            <div className='rounded border border-blue-300 bg-blue-50 p-3'>
+                            <div className='rounded border border-blue-300 bg-blue-50 p-3' data-keep-selection>
                                 <div className='mb-2 flex items-center justify-between'>
                                     <h3 className='text-sm font-semibold'>
                                         {ZONE_LABEL[browsing]} ({browsed.length})
