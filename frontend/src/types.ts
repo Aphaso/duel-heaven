@@ -206,6 +206,13 @@ export interface PlaylistPayload {
     priceCents: number | null;
 }
 
+export interface SupportReply {
+    matched: boolean;
+    answer: string;
+    link?: { label: string; to: string };
+    suggestions: string[];
+}
+
 export type StoreListing = {
     id: string;
     name: string;

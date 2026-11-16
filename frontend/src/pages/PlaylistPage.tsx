@@ -45,7 +45,7 @@ function PlaylistScreen({ id }: { id: string | undefined }) {
     return (
         <main className='mx-auto max-w-6xl p-8'>
             <Link to='/playlists' className='text-sm text-blue-700 hover:underline'>
-                ← All playlists
+                ← All Playlists
             </Link>
 
             {playlist.isPending && <p className='mt-4 text-gray-500'>Loading...</p>}

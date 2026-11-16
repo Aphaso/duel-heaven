@@ -22,6 +22,7 @@ import PurchaseSuccessPage from './pages/PurchaseSuccessPage';
 import PurchasedPlaylistPage from './pages/PurchasedPlaylistPage';
 import PurchasedComboPage from './pages/PurchasedComboPage';
 import AccountPaymentsPage from './pages/AccountPaymentsPage';
+import { SupportChat } from './pages/SupportChatPage';
 
 function navClass({ isActive }: { isActive: boolean }) {
   return isActive
@@ -61,6 +62,7 @@ function Layout() {
         </nav>
       </header>
       <Outlet></Outlet>
+      <SupportChat></SupportChat>
     </>
   );
 }

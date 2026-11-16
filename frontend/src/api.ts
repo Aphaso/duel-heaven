@@ -1,4 +1,4 @@
-import { type Card, type Deck, type DeckDetail, type DeckSection, type Paginated, type SidePattern, type SidePatternPayload, type WthGuide, type WthGuideSummary, type WthPayload, type Combo, type ComboSummary, type ComboPayload, type Playlist, type PlaylistSummary, type PlaylistPayload, type StoreListing, type StoreListingDetail, type PurchasedPlaylistSummary, type PurchasedPlaylist, type ConnectStatus } from './types';
+import { type Card, type Deck, type DeckDetail, type DeckSection, type Paginated, type SidePattern, type SidePatternPayload, type WthGuide, type WthGuideSummary, type WthPayload, type Combo, type ComboSummary, type ComboPayload, type Playlist, type PlaylistSummary, type PlaylistPayload, type StoreListing, type StoreListingDetail, type PurchasedPlaylistSummary, type PurchasedPlaylist, type ConnectStatus, type SupportReply } from './types';
 import { AUTH_EXPIRED_EVENT, CSRF_HEADER_NAME, CSRF_HEADER_VALUE } from './auth/session';
 
 /** Generic call: handles backend errors and 204 responses (no-body response). */
@@ -229,4 +229,10 @@ export function getConnectStatus() {
  */
 export function startOnboarding() {
     return request<{ url: string }>('/api/connect/onboarding', { method: 'POST' });
+}
+
+/** --------------------------------------------------------------- Support */
+
+export function askSupport(message: string): Promise<SupportReply> {
+    return request<SupportReply>('/api/support/ask', jsonBody('POST', { message }));
 }

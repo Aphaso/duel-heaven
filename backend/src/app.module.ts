@@ -14,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { StoreModule } from './store/store.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { ConnectModule } from './connect/connect.module';
+import { SupportModule } from './support/support.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ConnectModule } from './connect/connect.module';
     StoreModule,
     PurchasesModule,
     ConnectModule,
+    SupportModule,
   ],
   controllers: [AppController],
   providers: [AppService],
