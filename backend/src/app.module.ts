@@ -15,6 +15,7 @@ import { StoreModule } from './store/store.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { ConnectModule } from './connect/connect.module';
 import { SupportModule } from './support/support.module';
+import { AccountModule } from './account/account.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { SupportModule } from './support/support.module';
     PurchasesModule,
     ConnectModule,
     SupportModule,
+    AccountModule,
   ],
   controllers: [AppController],
   providers: [AppService],
