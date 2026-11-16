@@ -22,7 +22,7 @@ import PurchaseSuccessPage from './pages/PurchaseSuccessPage';
 import PurchasedPlaylistPage from './pages/PurchasedPlaylistPage';
 import PurchasedComboPage from './pages/PurchasedComboPage';
 import AccountPaymentsPage from './pages/AccountPaymentsPage';
-import { SupportChat } from './pages/SupportChatPage';
+import { SupportChat } from './SupportChat';
 
 function navClass({ isActive }: { isActive: boolean }) {
   return isActive

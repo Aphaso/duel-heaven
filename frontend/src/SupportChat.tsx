@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router';
-import { askSupport } from '../api';
-import type { SupportReply } from '../types';
+import { askSupport } from './api';
+import type { SupportReply } from './types';
 
 const MAX_LENGTH = 300;
 
