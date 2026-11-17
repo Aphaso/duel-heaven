@@ -168,6 +168,13 @@ export function commitPending(
     return { step };
 }
 
-export function removeStep(steps: ComboStep[], index: number): ComboStep[] {
-    return steps.filter((_, i) => i !== index);
+/**
+ * Deletes the step at 'index' and every step after it: the combo goes back to how it was right before that step.
+ * An index outside the list changes nothing.
+ */
+export function removeStepsFrom(steps: ComboStep[], index: number): ComboStep[] {
+    if (!Number.isInteger(index) || index < 0 || index >= steps.length) {
+        return steps;
+    }
+    return steps.slice(0, index);
 }

@@ -4,7 +4,7 @@ import ComboBoard from './ComboBoard';
 import { entriesOf, type ComboDraft } from '../comboDraft';
 import { COMBO_LIMITS, replay, STEP_KINDS, type ComboStep, type Move, type StepKind, type Zone } from '../comboEngine';
 import { changedInstances, KIND_LABEL, cardOfInstance, materialsOf, stepTitle } from '../comboPlayback';
-import { boardWithMoves, commitPending, describeMove, emptyPending, flipMove, removeStep, resolveZoneClick, tryAddMove, turnMove, ZONE_LABEL, type PendingStep } from '../comboRecorder';
+import { boardWithMoves, commitPending, describeMove, emptyPending, flipMove, removeStepsFrom, resolveZoneClick, tryAddMove, turnMove, ZONE_LABEL, type PendingStep } from '../comboRecorder';
 import type { Card } from '../types';
 
 interface Props {
@@ -122,13 +122,19 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
         setMessage(null);
     }
 
-    function deleteStep(index: number) {
-        if (!window.confirm(`Delete step ${index + 1}? The following steps may stop making sense.`)) {
+    function deleteFrom(index: number) {
+        const after = draft.steps.length - index - 1;
+        const text = after === 0
+            ? `Delete step ${index + 1}?`
+            : `Delete step ${index + 1} and the ${after} step${after === 1 ? '' : 's'} after it?`;
+        if (!window.confirm(text)) {
             return;
         }
-        onStepsChange(removeStep(draft.steps, index));
+        onStepsChange(removeStepsFrom(draft.steps, index));
         setPending(emptyPending());
         setSelectedId(null);
+        setAttaching(false);
+        setBrowsing(null);
         setMessage(null);
     }
 
@@ -408,10 +414,10 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
                                     </div>
                                     <button
                                         type='button'
-                                        onClick={() => deleteStep(i)}
+                                        onClick={() => deleteFrom(i)}
                                         className='text-xs text-red-700 underline'
                                     >
-                                        Delete
+                                        {i === draft.steps.length - 1 ? 'Delete' : 'Delete from here'}
                                     </button>
                                 </li>
                             ))}
