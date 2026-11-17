@@ -54,6 +54,22 @@ export function shiftCombo(draft: PlaylistDraft, index: number, direction: -1 | 
     return { ...draft, combos };
 }
 
+/**
+ * Drag and drop: the dragged combo takes the place of the combo it was dropped on.
+ * Unknown ids or the same id change nothing.
+ */
+export function moveCombo(draft: PlaylistDraft, fromId: string, toId: string): PlaylistDraft {
+    const from = draft.combos.findIndex((c) => c.id === fromId);
+    const to = draft.combos.findIndex((c) => c.id === toId);
+    if (from === -1 || to === -1 || from === to) {
+        return draft;
+    }
+    const combos = [...draft.combos];
+    const [moved] = combos.splice(from, 1);
+    combos.splice(to, 0, moved);
+    return { ...draft, combos };
+}
+
 /** The combos that can still be added: all the user's combos except the ones already in. */
 export function availableCombos(all: ComboSummary[], draft: PlaylistDraft): ComboSummary[] {
     const inside = new Set(draft.combos.map((c) => c.id));

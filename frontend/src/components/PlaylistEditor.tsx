@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
+import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { getConnectStatus, listCombos } from '../api';
 import {
     addCombo,
     availableCombos,
     isSamePlaylistDraft,
+    moveCombo,
     playlistProblems,
     removeCombo,
     shiftCombo,
     type PlaylistDraft,
 } from '../playlistDraft';
+import SortableComboRow from './SortableComboRow';
 
 interface Props {
     initial: PlaylistDraft;
@@ -23,6 +27,18 @@ interface Props {
 
 export default function PlaylistEditor({ initial, buyers, saving, error, onSave, onDirtyChange }: Props) {
     const [draft, setDraft] = useState<PlaylistDraft>(initial);
+
+    const sensors = useSensors(
+        // Start dragging after 6 pixels of movement
+        useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    );
+
+    function handleDragEnd({ active, over }: DragEndEvent) {
+        if (over && active.id !== over.id) {
+            setDraft((d) => moveCombo(d, String(active.id), String(over.id)));
+        }
+    }
 
     const dirty = !isSamePlaylistDraft(draft, initial);
     const problems = playlistProblems(draft);
@@ -113,45 +129,49 @@ export default function PlaylistEditor({ initial, buyers, saving, error, onSave,
                     {draft.combos.length === 0 ? (
                         <p className='text-sm text-gray-500'>Empty: add Combos from the list on the right.</p>
                     ) : (
-                        <ol className='space-y-1'>
-                            {draft.combos.map((c, i) => (
-                                <li key={c.id} className='flex items-center justify-between gap-2 rounded border p-2'>
-                                    <span className='text-sm'>
-                                        <span className='font-semibold'>
-                                            {i + 1}. {c.name}
-                                        </span>
-                                        <span className='ml-2 text-gray-500'>{c.stepCount} steps</span>
-                                    </span>
-                                    <span className='flex gap-1 text-sm'>
-                                        <button
-                                            type='button'
-                                            disabled={i === 0}
-                                            onClick={() => setDraft(shiftCombo(draft, i, -1))}
-                                            aria-label='Move up'
-                                            className='rounded border px-2 disabled:opacity-30'
-                                        >
-                                            ▲
-                                        </button>
-                                        <button
-                                            type='button'
-                                            disabled={i === draft.combos.length - 1}
-                                            onClick={() => setDraft(shiftCombo(draft, i, 1))}
-                                            aria-label='Move down'
-                                            className='rounded border px-2 disabled:opacity-30'
-                                        >
-                                            ▼
-                                        </button>
-                                        <button
-                                            type='button'
-                                            onClick={() => setDraft(removeCombo(draft, c.id))}
-                                            className='rounded border border-red-600 px-2 text-red-700'
-                                        >
-                                            Remove
-                                        </button>
-                                    </span>
-                                </li>
-                            ))}
-                        </ol>
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                            <SortableContext items={draft.combos.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                                <ol className='space-y-1'>
+                                    {draft.combos.map((c, i) => (
+                                        <SortableComboRow key={c.id} id={c.id} name={c.name} disabled={saving}>
+                                            <span className='flex-1 text-sm'>
+                                                <span className='font-semibold'>
+                                                    {i + 1}. {c.name}
+                                                </span>
+                                                <span className='ml-2 text-gray-500'>{c.stepCount} steps</span>
+                                            </span>
+                                            <span className='flex gap-1 text-sm'>
+                                                <button
+                                                    type='button'
+                                                    disabled={i === 0}
+                                                    onClick={() => setDraft(shiftCombo(draft, i, -1))}
+                                                    aria-label='Move up'
+                                                    className='rounded border px-2 disabled:opacity-30'
+                                                >
+                                                    ▲
+                                                </button>
+                                                <button
+                                                    type='button'
+                                                    disabled={i === draft.combos.length - 1}
+                                                    onClick={() => setDraft(shiftCombo(draft, i, 1))}
+                                                    aria-label='Move down'
+                                                    className='rounded border px-2 disabled:opacity-30'
+                                                >
+                                                    ▼
+                                                </button>
+                                                <button
+                                                    type='button'
+                                                    onClick={() => setDraft(removeCombo(draft, c.id))}
+                                                    className='rounded border border-red-600 px-2 text-red-700'
+                                                >
+                                                    Remove
+                                                </button>
+                                            </span>
+                                        </SortableComboRow>
+                                    ))}
+                                </ol>
+                            </SortableContext>
+                        </DndContext>
                     )}
                 </section>
 
