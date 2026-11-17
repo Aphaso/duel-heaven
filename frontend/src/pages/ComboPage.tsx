@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router';
-import { deleteCombo, getCombo } from '../api';
+import { deleteCombo, duplicateCombo, getCombo } from '../api';
 import ComboPlayer from '../components/ComboPlayer';
 
 export default function ComboPage() {
@@ -19,6 +19,15 @@ export default function ComboPage() {
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ['combos'] });
             navigate('/combos');
+        }
+    });
+
+    const duplicate = useMutation({
+        mutationFn: () => duplicateCombo(id!),
+        onSuccess: async (copy) => {
+            queryClient.setQueryData(['combo', copy.id], copy);
+            await queryClient.invalidateQueries({ queryKey: ['combos'] });
+            navigate(`/combos/${copy.id}`);
         }
     });
 
@@ -53,12 +62,21 @@ export default function ComboPage() {
                             >
                                 Delete
                             </button>
+                            <button
+                                type='button'
+                                disabled={duplicate.isPending}
+                                onClick={() => duplicate.mutate()}
+                                className='rounded border px-3 py-1 disabled:opacity-40'
+                            >
+                                {duplicate.isPending ? 'Copying...' : 'Duplicate'}
+                            </button>
                             <Link to={`/combos/${combo.data.id}/edit`} className='rounded border px-3 py-1'>
                                 Edit
                             </Link>
                         </div>
                     </div>
                     {remove.isError && <p className='mt-2 text-red-600'>{remove.error.message}</p>}
+                    {duplicate.isError && <p className='mt-2 text-red-600'>{duplicate.error.message}</p>}
 
                     <div className='mt-6'>
                         <ComboPlayer key={combo.data.id} combo={combo.data} />

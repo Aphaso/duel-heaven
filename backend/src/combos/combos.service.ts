@@ -3,6 +3,7 @@ import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { replay, type ComboCardEntry } from './combo-engine';
 import { checkComboCards, type ComboCardInfo } from './combo-rules';
+import { nextCopyName } from './copy-name';
 import { SaveComboDto } from './save-combo.dto';
 
 const comboInclude = {
@@ -68,6 +69,37 @@ export class CombosService {
             }),
         ]);
         return updated;
+    }
+
+    /**
+     * A copy of the combo: sam description, decklist, starting hand and steps, new name.
+     * It is copied as it is stored: it was already validated when it was saved.
+     */
+    async duplicate(userId: string, id: string) {
+        const source = await this.findOne(userId, id); // 404 if it is not the user's
+        const names = await this.prisma.combo.findMany({
+            where: { ownerId: userId },
+            select: { name: true },
+        });
+        return this.prisma.combo.create({
+            data: {
+                ownerId: userId,
+                name: nextCopyName(source.name, names.map((c) => c.name)),
+                description: source.description,
+                startingHand: source.startingHand,
+                steps: source.steps as Prisma.InputJsonValue,
+                stepCount: source.stepCount,
+                cards: {
+                    create: source.cards.map((c) => ({
+                        cardId: c.cardId,
+                        section: c.section,
+                        quantity: c.quantity,
+                        position: c.position,
+                    })),
+                },
+            },
+            include: comboInclude,
+        });
     }
 
     async remove(userId: string, id: string) {

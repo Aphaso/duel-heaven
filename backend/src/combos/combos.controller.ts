@@ -29,6 +29,11 @@ export class CombosController {
         return this.combos.update(userId, id, dto);
     }
 
+    @Post(':id/duplicate')
+    duplicate(@CurrentUserId() userId: string, @Param('id') id: string) {
+        return this.combos.duplicate(userId, id);
+    }
+
     @Delete(':id')
     @HttpCode(204)
     remove(@CurrentUserId() userId: string, @Param('id') id: string) {

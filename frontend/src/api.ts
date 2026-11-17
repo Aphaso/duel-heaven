@@ -155,6 +155,10 @@ export function updateCombo(id: string, data: ComboPayload) {
     return request<Combo>(`/api/combos/${id}`, jsonBody('PUT', data));
 }
 
+export function duplicateCombo(id: string) {
+    return request<Combo>(`/api/combos/${id}/duplicate`, { method: 'POST' });
+}
+
 export function deleteCombo(id: string) {
     return request<void>(`/api/combos/${id}`, { method: 'DELETE' });
 }
