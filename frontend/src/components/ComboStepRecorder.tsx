@@ -415,9 +415,33 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
                                     <button
                                         type='button'
                                         onClick={() => deleteFrom(i)}
-                                        className='text-xs text-red-700 underline'
+                                        aria-label={
+                                            i === draft.steps.length - 1
+                                                ? `Delete step ${i + 1}`
+                                                : `Delete step ${i + 1} and the following steps`
+                                        }
+                                        title={
+                                            i === draft.steps.length - 1
+                                                ? 'Delete this step'
+                                                : 'Delete this step and all the following ones'
+                                        }
+                                        className='shrink-0 rounded bg-red-600 p-1.5 text-white hover:bg-red-700'
                                     >
-                                        {i === draft.steps.length - 1 ? 'Delete' : 'Delete from here'}
+                                        <svg
+                                            viewBox='0 0 24 24'
+                                            className='h-4 w-4'
+                                            fill='none'
+                                            stroke='currentColor'
+                                            strokeWidth={2}
+                                            strokeLinecap='round'
+                                            strokeLinejoin='round'
+                                            aria-hidden='true'
+                                        >
+                                            <polyline points='3 6 5 6 21 6'></polyline>
+                                            <path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'></path>
+                                            <path d='M10 11v6M14 11v6'></path>
+                                            <path d='M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2'></path>
+                                        </svg>
                                     </button>
                                 </li>
                             ))}
