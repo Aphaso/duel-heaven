@@ -6,6 +6,7 @@ import WthGuideEditor from '../components/WthGuideEditor';
 import WthGuideView from '../components/WthGuideView';
 import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
 import { draftFromGuide, emptyWthDraft, toWthPayload, type WthDraft } from '../wthDraft';
+import { useConfirm } from '../confirm/useConfirm';
 
 export default function WthGuidePage() {
     const { id } = useParams<{ id: string }>();
@@ -16,6 +17,7 @@ function WthGuideScreen({ id }: { id: string | undefined }) {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const [editing, setEditing] = useState(false);
+    const confirm = useConfirm();
     const [dirty, setDirty] = useState(false);
 
     const guideQuery = useQuery({
@@ -47,6 +49,18 @@ function WthGuideScreen({ id }: { id: string | undefined }) {
             navigate('/wth');
         },
     });
+
+    async function askDelete(name: string) {
+        const confirmed = await confirm({
+            title: `Delete "${name}"?`,
+            message: 'The guide will be deleted.',
+            confirmLabel: 'Delete',
+            destructive: true,
+        });
+        if (confirmed) {
+            remove.mutate();
+        }
+    }
 
     // The only navigation guard of this page. While saving there is nothing to protect:
     // after a creation we navigate while the mutation is still "pending".
@@ -82,11 +96,7 @@ function WthGuideScreen({ id }: { id: string | undefined }) {
                                 <button
                                     type='button'
                                     disabled={remove.isPending}
-                                    onClick={() => {
-                                        if (window.confirm(`Delete "${guide.opponentDeckName}"?`)) {
-                                            remove.mutate();
-                                        }
-                                    }}
+                                    onClick={() => void askDelete(guide.opponentDeckName)}
                                     className='rounded border border-red-600 px-3 py-1 text-red-700 disabled:opacity-40'
                                 >
                                     Delete

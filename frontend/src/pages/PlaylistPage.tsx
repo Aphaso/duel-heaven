@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { deletePlaylist, getCombo, getPlaylist } from '../api';
 import { formatPrice } from '../price';
 import ComboPlayer from '../components/ComboPlayer';
+import { useConfirm } from '../confirm/useConfirm';
 
 export default function PlaylistPage() {
     const { id } = useParams<{ id: string }>();
@@ -14,6 +15,7 @@ function PlaylistScreen({ id }: { id: string | undefined }) {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const [index, setIndex] = useState(0);
+    const confirm = useConfirm();
 
     const playlist = useQuery({
         queryKey: ['playlist', id],
@@ -41,6 +43,21 @@ function PlaylistScreen({ id }: { id: string | undefined }) {
             navigate('/playlists');
         },
     });
+
+    async function askDelete(name: string, buyers: number) {
+        const confirmed = await confirm({
+            title: `Delete "${name}"?`,
+            message:
+                buyers > 0
+                    ? `It has been bought by ${buyers} ${buyers === 1 ? 'person' : 'people'}. They keep a frozen copy of its last version, but it disappears for you and from the Store.\nIts Combos are kept.`
+                    : 'Its Combos are kept.',
+                confirmLabel: 'Delete',
+                destructive: true,
+        });
+        if (confirmed) {
+            remove.mutate();
+        }
+    }
 
     return (
         <main className='mx-auto max-w-6xl p-8'>
@@ -73,16 +90,7 @@ function PlaylistScreen({ id }: { id: string | undefined }) {
                             <button
                                 type='button'
                                 disabled={remove.isPending}
-                                onClick={() => {
-                                    const buyers = playlist.data._count.purchases;
-                                    const message =
-                                        buyers > 0
-                                            ? `"${playlist.data.name}" has been bought by ${buyers} ${buyers === 1 ? 'person' : 'people'}. If you delete it, they keep a frozen copy of its last version, but it disappears for you and from the Store. Its Combos are kept. Delete anyway?`
-                                            : `Delete the Playlist "${playlist.data.name}"? Its Combos are kept.`;
-                                    if (window.confirm(message)) {
-                                        remove.mutate();
-                                    }
-                                }}
+                                onClick={() => void askDelete(playlist.data.name, playlist.data._count.purchases)}
                                 className='rounded border border-red-600 px-3 py-1 text-red-700 disabled:opacity-40'
                             >
                                 Delete

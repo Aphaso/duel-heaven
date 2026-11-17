@@ -6,6 +6,7 @@ import { getDeck } from '../api';
 import DeckDetailsForm from '../components/DeckDetailsForm';
 import DeckEditor from '../components/DeckEditor';
 import SidePatternsPanel from '../components/SidePatternsPanel';
+import { useConfirm } from '../confirm/useConfirm';
 
 type Tab = 'decklist' | 'side-patterns';
 
@@ -17,6 +18,7 @@ const TABS: { id: Tab; label: string }[] = [
 export default function DeckPage() {
     const { id } = useParams<{ id: string }>();
     const [tab, setTab] = useState<Tab>('decklist');
+    const confirm = useConfirm();
 
     const [listDirty, setListDirty] = useState(false);
     const [patternDirty, setPatternDirty] = useState(false);
@@ -24,7 +26,7 @@ export default function DeckPage() {
     // The page navigation guard
     useUnsavedChangesGuard(listDirty || patternDirty);
 
-    function selectTab(next: Tab) {
+    async function selectTab(next: Tab) {
         if (next === tab) {
             return;
         }
@@ -33,7 +35,12 @@ export default function DeckPage() {
          * The Decklist editor stays mounted even if hidden, so the draft survives a tab change.
          * The Side Pattern editor is unmounted on leave, so we ask first.
          */
-        if (patternDirty && !window.confirm('Discard changes to this Side Pattern?')) {
+        if (patternDirty && !(await confirm({
+            title: 'Discard changes?',
+            message: 'Your changes to this Side Pattern will be lost.',
+            confirmLabel: 'Discard',
+            destructive: true,
+        }))) {
             return;
         }
         setTab(next);
@@ -66,7 +73,7 @@ export default function DeckPage() {
                                 key={t.id}
                                 role='tab'
                                 aria-selected={tab === t.id}
-                                onClick={() => selectTab(t.id)}
+                                onClick={() => void selectTab(t.id)}
                                 className={`-mb-px border-b-2 px-4 py-2 text-sm ${
                                     tab === t.id
                                         ? 'border-blue-600 font-semibold text-blue-700'

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import PatternCardPicker from './PatternCardPicker';
 import { hasName, isBalanced, isSameDraft, laneTotals, lanePools, setCopies, type PatternDraft } from '../sidePatternDraft';
 import type { DeckCardEntry } from '../types';
+import { useConfirm } from '../confirm/useConfirm';
 
 interface Props {
     initial: PatternDraft;
@@ -27,6 +28,7 @@ export default function SidePatternEditor({
     onDirtyChange,
 }: Props) {
     const [draft, setDraft] = useState<PatternDraft>(initial);
+    const confirm = useConfirm();
 
     const dirty = !isSameDraft(draft, initial);
     const pools = lanePools(deckCards, draft);
@@ -38,8 +40,13 @@ export default function SidePatternEditor({
         return () => onDirtyChange(false);
     }, [dirty, onDirtyChange]);
 
-    function cancel() {
-        if (dirty && !window.confirm('Discard changes to this Side Pattern?')) {
+    async function cancel() {
+        if (dirty && !(await confirm({
+            title: 'Discard changes?',
+            message: 'Your changes to this Side Pattern will be lost.',
+            confirmLabel: 'Discard',
+            destructive: true,
+        }))) {
             return;
         }
         onCancel();
@@ -133,7 +140,7 @@ export default function SidePatternEditor({
                 </button>
                 <button
                     type='button'
-                    onClick={cancel}
+                    onClick={() => void cancel()}
                     className='rounded border px-3 py-1'
                 >
                     Cancel

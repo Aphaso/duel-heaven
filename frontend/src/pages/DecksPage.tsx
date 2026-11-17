@@ -2,11 +2,13 @@ import { useState, type SyntheticEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { createDeck, deleteDeck, listDecks } from '../api';
+import { useConfirm } from '../confirm/useConfirm';
 
 export default function DecksPage() {
     const queryClient = useQueryClient();
     const [name, setName] = useState('');
     const [archetype, setArchetype] = useState('');
+    const confirm = useConfirm();
 
     const decks = useQuery({ queryKey: ['decks'], queryFn: listDecks });
 
@@ -32,8 +34,14 @@ export default function DecksPage() {
         });
     }
 
-    function handleDelete(id: string, deckName: string) {
-        if (window.confirm(`Delete deck "${deckName}"?`)) {
+    async function handleDelete(id: string, deckName: string) {
+        const confirmed = await confirm({
+            title: `Delete Deck "${deckName}"?`,
+            message: 'Its Decklist and its Side Patterns will be deleted too.',
+            confirmLabel: 'Delete',
+            destructive: true,
+        });
+        if (confirmed) {
             remove.mutate(id);
         }
     }
@@ -44,7 +52,7 @@ export default function DecksPage() {
 
             <form onSubmit={handleSubmit} className='mt-6 flex flex-wrap gap-2'>
                 <input value={name} onChange={(e) => setName(e.target.value)} placeholder='Name of the Deck' className='min-w-48 flex-1 rounded border border-gray-300 px-3 py-2'></input>
-                <input value={archetype} onChange={(e) => setArchetype(e.target.value)} placeholder='Archetype (optional)' className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40'></input>
+                <input value={archetype} onChange={(e) => setArchetype(e.target.value)} placeholder='Archetype (optional)' className='min-w-48 flex-1 rounded border border-gray-300 px-3 py-2'></input>
                 <button type='submit' disabled={!name.trim() || create.isPending} className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40'>
                     {create.isPending ? 'Creating...' : 'Create Deck'}
                 </button>
@@ -78,7 +86,7 @@ export default function DecksPage() {
                                     {new Date(deck.updatedAt).toLocaleDateString('it-IT')}
                                 </span>
                             </Link>
-                            <button onClick={() => handleDelete(deck.id, deck.name)} disabled={remove.isPending} className='rounded border border-red-300 px-3 py-1 text-sm text-red-700 hover:bg-red-50 disabled:opacity-40'>
+                            <button onClick={() => void handleDelete(deck.id, deck.name)} disabled={remove.isPending} className='rounded border border-red-300 px-3 py-1 text-sm text-red-700 hover:bg-red-50 disabled:opacity-40'>
                                 Delete
                             </button>
                         </li>

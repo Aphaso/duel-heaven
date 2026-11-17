@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { cardImageUrl } from '../api';
 import WthCardSearch from './WthCardSearch';
 import { addResponse, addTarget, isSameWthDraft, removeResponse, removeTarget, setEntryNotes, WTH_MAX_RESPONSES, wthProblems, type WthDraft } from '../wthDraft';
+import { useConfirm } from '../confirm/useConfirm';
 
 interface Props {
     initial: WthDraft;
@@ -25,6 +26,7 @@ export default function WthGuideEditor({
 }: Props) {
     const [draft, setDraft] = useState<WthDraft>(initial);
     const [picker, setPicker] = useState<Picker>(null);
+    const confirm = useConfirm();
 
     const dirty = !isSameWthDraft(draft, initial);
     const problems = wthProblems(draft);
@@ -45,8 +47,13 @@ export default function WthGuideEditor({
             ? draft.entries.find((e) => e.card.id === activePicker.targetId)
             : undefined;
 
-    function cancel() {
-        if (dirty && !window.confirm('Discard your changes to this Guide?')) {
+    async function cancel() {
+        if (dirty && !(await confirm({
+            title: 'Discard changes?',
+            message: 'Your chagnes to this Guide will be lost.',
+            confirmLabel: 'Discard',
+            destructive: true,
+        }))) {
             return;
         }
         onCancel?.();
@@ -174,7 +181,7 @@ export default function WthGuideEditor({
                     {saving ? 'Saving...' : 'Save'}
                 </button>
                 {onCancel && (
-                    <button type='button' onClick={cancel} className='rounded border px-4 py-2'>
+                    <button type='button' onClick={() => void cancel()} className='rounded border px-4 py-2'>
                         Cancel
                     </button>
                 )}

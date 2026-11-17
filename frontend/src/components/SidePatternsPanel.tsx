@@ -5,6 +5,7 @@ import SidePatternEditor from './SidePatternEditor';
 import SidePatternView from './SidePatternView';
 import { draftFromPattern, emptyDraft, toPayload, type PatternDraft } from '../sidePatternDraft';
 import type { DeckDetail } from '../types';
+import { useConfirm } from '../confirm/useConfirm';
 
 interface Props {
     deck: DeckDetail
@@ -24,6 +25,7 @@ export default function SidePatternsPanel({
     const deckCards = deck.cards;
     const queryClient = useQueryClient();
     const [mode, setMode] = useState<Mode>({ kind: 'view', id: null });
+    const confirm = useConfirm();
 
     const { data: patterns = [], isLoading, error } = useQuery({
         queryKey: ['side-patterns', deckId],
@@ -52,6 +54,18 @@ export default function SidePatternsPanel({
             setMode({ kind: 'view', id: null });
         },
     });
+
+    async function askDelete(patternId: string, name: string) {
+        const confirmed = await confirm({
+            title: `Delete "${name}"?`,
+            message: 'This Side Pattern will be deleted.',
+            confirmLabel: 'Delete',
+            destructive: true,
+        });
+        if (confirmed) {
+            remove.mutate(patternId);
+        }
+    }
 
     if (isLoading) {
         return <p>Loading...</p>;
@@ -122,11 +136,7 @@ export default function SidePatternsPanel({
                         <button
                             type='button'
                             disabled={remove.isPending}
-                            onClick={() => {
-                                if (window.confirm(`Delete "${selected.opponentDeckName}"?`)) {
-                                    remove.mutate(selected.id);
-                                }
-                            }}
+                            onClick={() => void askDelete(selected.id, selected.opponentDeckName)}
                             className='rounded border border-red-600 px-3 py-1 text-red-700 disabled:opacity-40'
                         >
                             Delete

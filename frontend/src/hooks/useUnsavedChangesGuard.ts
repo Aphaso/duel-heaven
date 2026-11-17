@@ -1,13 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useBlocker } from 'react-router';
-
-const MESSAGE = 'You have unsaved changes. Discard chagnes and leave?';
+import { useConfirm } from '../confirm/useConfirm';
 
 /** 
  * Guard against losing unsaved work.
  * Call once per page since React Router supports a single blocker at a time
  */
 export function useUnsavedChangesGuard(dirty: boolean) {
+    const confirm = useConfirm();
+    // True while dialog is open: the same blocked navigation must not open it twice
+    const asking = useRef(false);
+
     // Closing or reloading the tab
     useEffect(() => {
         if (!dirty) {
@@ -23,13 +26,22 @@ export function useUnsavedChangesGuard(dirty: boolean) {
     // Navigating to another route inside the app
     const blocker = useBlocker(dirty);
     useEffect(() => {
-        if (blocker.state !== 'blocked') {
+        if (blocker.state !== 'blocked' || asking.current) {
             return;
         }
-        if (window.confirm(MESSAGE)) {
-            blocker.proceed();
-        } else {
-            blocker.reset();
-        }
-    }, [blocker]);
+        asking.current = true;
+        void confirm({
+            title: 'Leave this page?',
+            message: 'You have unsaved changes. If you leave, they will be lost.',
+            confirmLabel: 'Leave',
+            destructive: true,
+        }).then((leave) => {
+            asking.current = false;
+            if (leave) {
+                blocker.proceed();
+            } else {
+                blocker.reset();
+            }
+        });
+    }, [blocker, confirm]);
 }
