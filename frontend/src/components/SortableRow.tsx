@@ -11,7 +11,7 @@ interface Props {
 }
 
 /** A row of the playlist that can be dragged by its handle */
-export default function SortableComboRow({ id, name, disabled = false, children }: Props) {
+export default function SortableRow({ id, name, disabled = false, children }: Props) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
 
     return (

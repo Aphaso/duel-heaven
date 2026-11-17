@@ -181,6 +181,10 @@ export function updatePlaylist(id: string, data: PlaylistPayload) {
     return request<Playlist>(`/api/playlists/${id}`, jsonBody('PUT', data));
 }
 
+export function reorderPlaylists(ids: string[]) {
+    return request<void>('/api/playlists/order', jsonBody('PUT', { ids }));
+}
+
 export function deletePlaylist(id: string) {
     return request<void>(`/api/playlists/${id}`, { method: 'DELETE' });
 }

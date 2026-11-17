@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ConnectService } from '../connect/connect.service';
 import { SavePlaylistDto } from './save-playlist.dto';
 import { buildPlaylistSnapshot } from './playlist-snapshot';
+import { sameIds } from './playlist-order';
 
 export const PRICE_MIN_CENTS = 50;
 export const PRICE_MAX_CENTS = 50_000;
@@ -30,7 +31,7 @@ export class PlaylistsService {
     findAll(userId: string) {
         return this.prisma.playlist.findMany({
             where: { ownerId: userId, deletedAt: null },
-            orderBy: { name: 'asc' },
+            orderBy: [{ position: 'asc' }, { name: 'asc' }],
             select: {
                 id: true,
                 name: true,
@@ -56,10 +57,15 @@ export class PlaylistsService {
 
     async create(userId: string, dto: SavePlaylistDto) {
         const name = await this.validate(userId, dto);
+        const last = await this.prisma.playlist.aggregate({
+            where: { ownerId: userId, deletedAt: null },
+            _max: { position: true },
+        });
         return this.prisma.playlist.create({
             data: {
                 ownerId: userId,
                 name,
+                position: (last._max.position ?? -1) + 1,
                 description: this.descriptionOf(dto),
                 ...this.saleOf(dto),
                 combos: { create: this.combosData(dto) },
@@ -112,6 +118,30 @@ export class PlaylistsService {
                 data: { deletedAt: new Date(), isForSale: false, snapshot },
             }),
         ]);
+    }
+
+    /**
+     * Saves the order of the user's list.
+     * ids must be exactly the user's playlists: if the list changed in the meantime
+     * (another tab, another device) nothing is saved.
+     */
+    async reorder(userId: string, ids: string[]) {
+        const mine = await this.prisma.playlist.findMany({
+            where: { ownerId: userId, deletedAt: null },
+            select: { id: true, updatedAt: true },
+        });
+        if (!sameIds(mine.map((p) => p.id), ids)) {
+            throw new ConflictException('Your playlists changed: reload the page and try again');
+        }
+        const updatedAt = new Map(mine.map((p) => [p.id, p.updatedAt]));
+        // updatedAt is written back as it was: moving a playlist is not editing it,
+        // and the Store lists the newest first
+        await this.prisma.$transaction(
+            ids.map((id, position) => this.prisma.playlist.update({
+                where: { id },
+                data: { position, updatedAt: updatedAt.get(id) },
+            })),
+        );
     }
 
     private combosData(dto: SavePlaylistDto) {

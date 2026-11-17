@@ -211,6 +211,7 @@ model Playlist {
   isForSale   Boolean         @default(false)
   priceCents  Int?            // In Euro cents, we don't use decimals
   snapshot    Json?           // Frozen copy, only if the playlist had buyers when it was deleted
+  position    Int             @default(0) // Order chosen by the owner in their list
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   deletedAt   DateTime?

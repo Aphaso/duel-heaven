@@ -3,6 +3,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUserId } from '../auth/current-user.decorator';
 import { PlaylistsService } from './playlists.service';
 import { SavePlaylistDto } from './save-playlist.dto';
+import { ReorderPlaylistsDto } from './reorder-playlists.dto';
 
 @Controller('playlists')
 @UseGuards(AuthGuard)
@@ -22,6 +23,12 @@ export class PlaylistsController {
     @Post()
     create(@CurrentUserId() userId: string, @Body() dto: SavePlaylistDto) {
         return this.playlists.create(userId, dto);
+    }
+
+    @Put('order')
+    @HttpCode(204)
+    reorder(@CurrentUserId() userId: string, @Body() dto: ReorderPlaylistsDto) {
+        return this.playlists.reorder(userId, dto.ids);
     }
 
     @Put(':id')

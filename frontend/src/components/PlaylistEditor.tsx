@@ -14,7 +14,7 @@ import {
     shiftCombo,
     type PlaylistDraft,
 } from '../playlistDraft';
-import SortableComboRow from './SortableComboRow';
+import SortableRow from './SortableRow';
 
 interface Props {
     initial: PlaylistDraft;
@@ -133,7 +133,7 @@ export default function PlaylistEditor({ initial, buyers, saving, error, onSave,
                             <SortableContext items={draft.combos.map((c) => c.id)} strategy={verticalListSortingStrategy}>
                                 <ol className='space-y-1'>
                                     {draft.combos.map((c, i) => (
-                                        <SortableComboRow key={c.id} id={c.id} name={c.name} disabled={saving}>
+                                        <SortableRow key={c.id} id={c.id} name={c.name} disabled={saving}>
                                             <span className='flex-1 text-sm'>
                                                 <span className='font-semibold'>
                                                     {i + 1}. {c.name}
@@ -167,7 +167,7 @@ export default function PlaylistEditor({ initial, buyers, saving, error, onSave,
                                                     Remove
                                                 </button>
                                             </span>
-                                        </SortableComboRow>
+                                        </SortableRow>
                                     ))}
                                 </ol>
                             </SortableContext>
