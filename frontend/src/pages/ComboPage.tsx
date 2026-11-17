@@ -2,11 +2,13 @@ import { useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router';
 import { deleteCombo, duplicateCombo, getCombo } from '../api';
 import ComboPlayer from '../components/ComboPlayer';
+import { useConfirm } from '../confirm/useConfirm';
 
 export default function ComboPage() {
     const { id } = useParams<{ id: string }>();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
+    const confirm = useConfirm();
 
     const combo = useQuery({
         queryKey: ['combo', id],
@@ -31,6 +33,18 @@ export default function ComboPage() {
         }
     });
 
+    async function askDelete(name: string) {
+        const confirmed = await confirm({
+            title: `Delete "${name}"?`,
+            message: 'The combo will also disappear from every playlist that contains it.',
+            confirmLabel: 'Delete',
+            destructive: true,
+        });
+        if (confirmed) {
+            remove.mutate();
+        }
+    }
+
     return (
         <main className='mx-auto max-w-6xl p-8'>
             <Link to='/combos' className='text-sm text-blue-700 hover:underline'>
@@ -53,11 +67,7 @@ export default function ComboPage() {
                             <button
                                 type='button'
                                 disabled={remove.isPending}
-                                onClick={() => {
-                                    if (window.confirm(`Delete "${combo.data.name}"?`)) {
-                                        remove.mutate();
-                                    }
-                                }}
+                                onClick={() => void askDelete(combo.data.name)}
                                 className='rounded border border-red-600 px-3 py-1 text-red-700 disabled:opacity-40'
                             >
                                 Delete

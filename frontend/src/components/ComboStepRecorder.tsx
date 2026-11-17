@@ -6,6 +6,7 @@ import { COMBO_LIMITS, replay, STEP_KINDS, type ComboStep, type Move, type StepK
 import { changedInstances, KIND_LABEL, cardOfInstance, materialsOf, stepTitle } from '../comboPlayback';
 import { boardWithMoves, commitPending, describeMove, emptyPending, flipMove, removeStepsFrom, resolveZoneClick, tryAddMove, turnMove, ZONE_LABEL, type PendingStep } from '../comboRecorder';
 import type { Card } from '../types';
+import { useConfirm } from '../confirm/useConfirm';
 
 interface Props {
     draft: ComboDraft;
@@ -18,6 +19,7 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
     const [attaching, setAttaching] = useState(false);
     const [browsing, setBrowsing] = useState<Zone | null>(null);
     const [message, setMessage] = useState<string | null>(null);
+    const confirm = useConfirm();
 
     // A click anywhere outside the cards, the zones and the panels of the selected card deselects it.
     // The areas to keep are marked with the attribute data-keep-selection
@@ -122,12 +124,18 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
         setMessage(null);
     }
 
-    function deleteFrom(index: number) {
+    async function deleteFrom(index: number) {
         const after = draft.steps.length - index - 1;
-        const text = after === 0
-            ? `Delete step ${index + 1}?`
-            : `Delete step ${index + 1} and the ${after} step${after === 1 ? '' : 's'} after it?`;
-        if (!window.confirm(text)) {
+        const confirmed = await confirm({
+            title:
+                after === 0
+                    ? `Delete step ${index + 1}?`
+                    : `Delete step ${index + 1} and the ${after} step${after === 1 ? '' : 's'} after it?`,
+            message: 'The combo chagnes only when you save it.',
+            confirmLabel: 'Delete',
+            destructive: true,
+        });
+        if (!confirmed) {
             return;
         }
         onStepsChange(removeStepsFrom(draft.steps, index));
@@ -414,7 +422,7 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
                                     </div>
                                     <button
                                         type='button'
-                                        onClick={() => deleteFrom(i)}
+                                        onClick={() => void deleteFrom(i)}
                                         aria-label={
                                             i === draft.steps.length - 1
                                                 ? `Delete step ${i + 1}`

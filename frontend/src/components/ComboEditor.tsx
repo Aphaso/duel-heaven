@@ -4,6 +4,7 @@ import { cardImageUrl, getDeck, listDecks } from '../api';
 import WthCardSearch from './WthCardSearch';
 import { addCopy, canAddCopy, comboProblems, COMBO_DECK_UI, deckCounts, handCopies, importDeckCards, isSameComboDraft, removeCopy, setHandCopies, type ComboDraft, type DraftCard } from '../comboDraft';
 import ComboStepRecorder from './ComboStepRecorder';
+import { useConfirm } from '../confirm/useConfirm';
 
 interface Props {
     initial: ComboDraft;
@@ -50,6 +51,7 @@ function DeckTile({
 
 export default function ComboEditor({ initial, saving, error, onSave, onDirtyChange }: Props) {
     const queryClient = useQueryClient();
+    const confirm = useConfirm();
     const [draft, setDraft] = useState<ComboDraft>(initial);
     const [searching, setSearching] = useState(false);
     const [importId, setImportId] = useState('');
@@ -74,7 +76,12 @@ export default function ComboEditor({ initial, saving, error, onSave, onDirtyCha
         }
         if (
             draft.cards.length > 0 &&
-            !window.confirm('Replace the Decklist? The starting hand and the steps will be cleared.')
+            !(await confirm({
+                title: 'Replace the decklist?',
+                message: 'The starting hand and the steps will be cleared.',
+                confirmLabel: 'Replace',
+                destructive: true,
+            }))
         ) {
             return;
         }
