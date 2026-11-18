@@ -42,6 +42,17 @@ const LAYOUT: Record<GridZone, { col: number; row: number; label: string }> = {
 };
 
 const PILES = new Set<GridZone>(['DECK', 'EXTRA', 'GRAVEYARD', 'BANISHED']);
+
+/** Background of every type of zone: monsters blue, spells/traps green, the piles neutral. */
+function tintOf(zone: GridZone): string {
+    if (zone.startsWith('MONSTER') || zone.startsWith('EXTRA_MONSTER')) {
+        return 'bg-aether-950/40';
+    }
+    if (zone.startsWith('SPELL') || zone.startsWith('PENDULUM') || zone === 'FIELD') {
+        return 'bg-frame-spell/8';
+    }
+    return 'bg-night-900/70';
+}
 const HIDDEN_PILES = new Set<GridZone>(['DECK', 'EXTRA']);
 
 function CardImage({
@@ -55,8 +66,12 @@ function CardImage({
     highlighted: boolean;
     selected?: boolean;
 }) {
-    const ring = selected ? 'ring-2 ring-blue-500' : highlighted ? 'ring-2 ring-amber-400' : '';
-    const classes = ['h-full rounded-sm', state.position === 'DEF' ? 'rotate-90' : '', ring].join(' ');
+    const ring = selected
+        ? 'ring-2 ring-primary shadow-glow-primary'
+        : highlighted
+          ? 'ring-2 ring-relic-400 shadow-glow-accent'
+          : 'shadow-card';
+    const classes = ['h-full rounded-[3px] transition-[transform,box-shadow] duration-300', state.position === 'DEF' ? 'rotate-90' : '', ring].join(' ');
 
     if (state.face === 'DOWN') {
         return (
@@ -86,6 +101,7 @@ function Slot({
     label,
     col,
     row,
+    tint,
     active,
     onClick,
     children,
@@ -93,6 +109,8 @@ function Slot({
     label: string;
     col: number;
     row: number;
+    /** Background color of the zone type (monster, spell/trap, pile). */
+    tint: string;
     /** The selected card is in this zone. */
     active: boolean;
     onClick?: () => void;
@@ -102,12 +120,12 @@ function Slot({
         <div
             onClick={onClick}
             data-keep-selection
-            className={`relative aspect-square rounded border border-dashed bg-gray-50 ${
-                active ? 'border-blue-500' : 'border-gray-300'
-            } ${onClick ? 'cursor-pointer hover:bg-blue-50' : ''}`}
+            className={`relative aspect-square rounded-control border transition-colors ${tint} ${
+                active ? 'border-primary shadow-glow-primary' : 'border-white/8'
+            } ${onClick ? 'cursor-pointer hover:border-aether-700 hover:bg-aether-950/60' : ''}`}
             style={{ gridColumn: col, gridRow: row }}
         >
-            <span className='pointer-events-none absolute left-0.5 top-0 z-10 text-[9px] uppercase text-gray-400'>
+            <span className='pointer-events-none absolute top-0.5 left-1 z-10 hidden font-display text-[0.5625rem] font-semibold tracking-wide text-ink-faint uppercase sm:block'>
                 {label}
             </span>
             <div className='absolute inset-0 flex items-center justify-center p-1'>{children}</div>
@@ -119,7 +137,7 @@ function Badge({ children, title }: { children: ReactNode; title?: string }) {
     return (
         <span
             title={title}
-            className='absolute bottom-0.5 right-0.5 z-10 rounded bg-gray-800 px-1 text-[10px] text-white'
+            className='numeric absolute right-0.5 bottom-0.5 z-10 rounded bg-night-950/90 px-1 text-micro text-ink ring-1 ring-white/10'
         >
             {children}
         </span>
@@ -139,8 +157,11 @@ export default function ComboBoard({
     const selectedZone = selected ? board.find((c) => c.id === selected)?.zone : undefined;
 
     return (
-        <div className='space-y-3'>
-            <div className='grid gap-1' style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
+        <div className='space-y-3 rounded-panel border border-line bg-surface-sunken p-2 shadow-panel sm:p-3'>
+            <div
+                className='grid gap-1 rounded-control bg-[radial-gradient(ellipse_at_center,rgb(31_198_245/0.06),transparent_70%)] sm:gap-1.5'
+                style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}
+            >
                 {(Object.keys(LAYOUT) as GridZone[]).map((zone) => {
                     const { col, row, label } = LAYOUT[zone];
                     const inZone = groups[zone] ?? [];
@@ -150,7 +171,7 @@ export default function ComboBoard({
                     if (PILES.has(zone)) {
                         const top = inZone[inZone.length - 1];
                         return (
-                            <Slot key={zone} label={label} col={col} row={row} active={active} onClick={onClick}>
+                            <Slot key={zone} label={label} col={col} row={row} tint={tintOf(zone)} active={active} onClick={onClick}>
                                 {top && (
                                     <>
                                         <CardImage
@@ -173,7 +194,7 @@ export default function ComboBoard({
                     const state = inZone[0];
                     const materials = state ? materialsOf(board, state.id) : [];
                     return (
-                        <Slot key={zone} label={label} col={col} row={row} active={active} onClick={onClick}>
+                        <Slot key={zone} label={label} col={col} row={row} tint={tintOf(zone)} active={active} onClick={onClick}>
                             {state && (
                                 <>
                                     <CardImage
@@ -200,19 +221,22 @@ export default function ComboBoard({
             </div>
 
             <div>
-                <h3 className='mb-1 text-xs font-semibold uppercase text-gray-500'>Hand</h3>
+                <h3 className='label mb-1.5 flex items-center gap-2 text-ink-subtle'>
+                    Hand
+                    <span className='numeric text-ink-faint'>{hand.length}</span>
+                </h3>
                 <div
                     onClick={onZoneClick ? () => onZoneClick('HAND') : undefined}
                     data-keep-selection
-                    className={`flex min-h-28 flex-wrap gap-2 rounded border bg-gray-50 p-2 ${
-                        onZoneClick ? 'cursor-pointer hover:bg-blue-50' : ''
+                    className={`flex min-h-28 flex-wrap items-center gap-2 rounded-control border border-white/8 bg-night-900/70 p-2 ${
+                        onZoneClick ? 'cursor-pointer transition-colors hover:border-aether-700 hover:bg-aether-950/60' : ''
                     }`}
                 >
-                    {hand.length === 0 && <span className='text-sm text-gray-400'>Empty Hand</span>}
+                    {hand.length === 0 && <span className='w-full text-center text-sm text-ink-faint'>Empty Hand</span>}
                     {hand.map((state) => (
                         <div
                             key={state.id}
-                            className='h-24'
+                            className={`h-24 ${onCardClick ? 'cursor-pointer transition-transform hover:-translate-y-1' : ''}`}
                             onClick={
                                 onCardClick
                                     ? (e) => {

@@ -1,10 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { cardImageUrl, getDeck, listDecks } from '../api';
+import { getDeck, listDecks } from '../api';
 import WthCardSearch from './WthCardSearch';
 import { addCopy, canAddCopy, comboProblems, COMBO_DECK_UI, deckCounts, handCopies, importDeckCards, isSameComboDraft, removeCopy, setHandCopies, type ComboDraft, type DraftCard } from '../comboDraft';
 import ComboStepRecorder from './ComboStepRecorder';
 import { useConfirm } from '../confirm/useConfirm';
+import CardTile from './CardTile';
+import { Button } from '../ui/Button';
+import { Field, Input, Select } from '../ui/Field';
+import { BoltIcon, CheckIcon, CloseIcon, DeckIcon, PlusIcon } from '../ui/icons';
+import { Panel } from '../ui/Panel';
+import { ErrorMessage, Notice } from '../ui/States';
+import { Stepper } from '../ui/Stepper';
+import { cn, panelStyles } from '../ui/styles';
+import { Tabs } from '../ui/Tabs';
 
 interface Props {
     initial: ComboDraft;
@@ -26,25 +35,16 @@ function DeckTile({
     onRemove: () => void;
 }) {
     return (
-        <li className='w-20 text-center'>
-            <img src={cardImageUrl(entry.card.id)} alt={entry.card.name} draggable={false} className='w-full' />
-            <span className='block truncate text-xs' title={entry.card.name}>
+        <li className='flex w-card-sm flex-col items-center gap-1.5 text-center sm:w-card-md'>
+            <div className='w-full'>
+                <CardTile card={entry.card}></CardTile>
+            </div>
+            <span className='block w-full truncate text-micro text-ink-muted' title={entry.card.name}>
                 {entry.card.name}
             </span>
-            <div className='flex items-center justify-center gap-1 text-sm'>
-                <button type='button' onClick={onRemove} className='rounded border px-1.5'>
-                    −
-                </button>
-                <span>{entry.quantity}</span>
-                <button
-                    type='button'
-                    onClick={onAdd}
-                    disabled={!canAdd}
-                    className='rounded border px-1.5 disabled:opacity-30'
-                >
-                    +
-                </button>
-            </div>
+            <Stepper itemLabel={entry.card.name} onDecrement={onRemove} onIncrement={onAdd} incrementDisabled={!canAdd}>
+                {entry.quantity}
+            </Stepper>
         </li>
     );
 }
@@ -104,194 +104,173 @@ export default function ComboEditor({ initial, saving, error, onSave, onDirtyCha
 
     return (
         <div className='space-y-6'>
-            <div className='grid gap-3 sm:grid-cols-2'>
-                <label className='block text-sm'>
-                    Name
-                    <input
-                        value={draft.name}
-                        onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                        maxLength={100}
-                        className='mt-1 w-full rounded border px-2 py-1'
-                    >
-                    </input>
-                </label>
-                <label className='block text-sm'>
-                    Description (optional)
-                    <input
-                        value={draft.description}
-                        onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                        maxLength={1000}
-                        className='mt-1 w-full rounded border px-2 py-1'
-                    >
-                    </input>
-                </label>
+            <div className={`${panelStyles} grid gap-4 p-panel sm:grid-cols-2`}>
+                <Field label='Name'>
+                    {(control) => (
+                        <Input
+                            {...control}
+                            value={draft.name}
+                            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                            maxLength={100}
+                            placeholder='e.g. Snake-Eye 1-card combo'
+                        >
+                        </Input>
+                    )}
+                </Field>
+                <Field label='Description (optional)'>
+                    {(control) => (
+                        <Input
+                            {...control}
+                            value={draft.description}
+                            onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                            maxLength={1000}
+                        >
+                        </Input>
+                    )}
+                </Field>
             </div>
 
-            <div role='tablist' className='flex gap-1 border-b border-gray-200'>
-                {(['setup', 'steps'] as const).map((t) => (
-                    <button
-                        key={t}
-                        type='button'
-                        role='tab'
-                        aria-selected={tab === t}
-                        onClick={() => setTab(t)}
-                        className={`-mb-px border-b-2 px-4 py-2 text-sm ${
-                            tab === t
-                                ? 'border-blue-600 font-semibold text-blue-700'
-                                : 'border-transparent text-gray-600 hover:text-gray-900'
-                        }`}
-                    >
-                        {t === 'setup' ? 'Setup' : `Steps (${draft.steps.length})`}
-                    </button>
-                ))}
-            </div>
+            <Tabs<'setup' | 'steps'>
+                label='Combo editor'
+                tabs={[
+                    { id: 'setup', label: 'Setup', icon: DeckIcon },
+                    { id: 'steps', label: `Steps (${draft.steps.length})`, icon: BoltIcon },
+                ]}
+                value={tab}
+                onChange={setTab}
+            ></Tabs>
 
-            <div className={tab === 'setup' ? 'space--y-6' : 'hidden'}>
-                <section className='space-y-3'>
-                    <div className='flex flex-wrap items-center gap-3'>
-                        <h2 className='text-lg font-semibold'>Decklist</h2>
-                        <span className='text-sm text-gray-500'>
-                            Main {counts.MAIN}/{COMBO_DECK_UI.mainMax} · Extra {counts.EXTRA}/{COMBO_DECK_UI.extraMax}
+            <div role='tabpanel' className={tab === 'setup' ? 'space-y-6' : 'hidden'}>
+                <Panel
+                    title='Decklist'
+                    actions={
+                        <span className='numeric text-caption text-ink-subtle'>
+                            <span className='text-zone-main'>Main</span> {counts.MAIN}/{COMBO_DECK_UI.mainMax} · <span className='text-zone-extra'>Extra</span> {counts.EXTRA}/{COMBO_DECK_UI.extraMax}
                         </span>
-                        <button
-                            type='button'
-                            onClick={() => setSearching((s) => !s)}
-                            className='rounded border px-3 py-1 text-sm'
-                        >
-                            {searching ? 'Hide search' : '+ Add cards'}
-                        </button>
-                        <select
-                            value={importId}
-                            onChange={(e) => setImportId(e.target.value)}
-                            className='rounded border px-2 py-1 text-sm'
-                        >
-                        <option value=''>Import from a deck...</option>
-                        {decks.data?.map((d) => (
-                            <option key={d.id} value={d.id}>
-                                {d.name}
-                            </option>
-                        ))}
-                        </select>
-                        <button
-                            type='button'
-                            onClick={importDeck}
-                            disabled={importId === ''}
-                            className='rounded border px-3 py-1 text-sm disabled:opacity-40'
-                        >
-                            Import
-                        </button>
+                    }
+                >
+                    <div className='space-y-5'>
+                        <div className='flex flex-wrap items-center gap-2'>
+                            <Button size='sm' variant={searching ? 'secondary' : 'primary'} onClick={() => setSearching((s) => !s)}>
+                                {searching ? <CloseIcon className='size-4' /> : <PlusIcon className='size-4' />}
+                                {searching ? 'Hide search' : 'Add cards'}
+                            </Button>
+                            <span className='mx-1 hidden h-6 w-px bg-line sm:block'></span>
+                            <div className='min-w-0 flex-1 sm:max-w-64'>
+                                <Select
+                                    value={importId}
+                                    onChange={(e) => setImportId(e.target.value)}
+                                    aria-label='Import from a deck'
+                                    className='h-8 py-0 text-caption'
+                                >
+                                    <option value=''>Import from a deck...</option>
+                                    {decks.data?.map((d) => (
+                                        <option key={d.id} value={d.id}>
+                                            {d.name}
+                                        </option>
+                                    ))}
+                                </Select>
+                            </div>
+                            <Button size='sm' onClick={importDeck} disabled={importId === ''}>
+                                Import
+                            </Button>
+                        </div>
+                        {importError && <ErrorMessage>{importError}</ErrorMessage>}
+
+                        {searching && (
+                            <WthCardSearch
+                                title='Add Cards to the combo'
+                                disabledIds={fullIds}
+                                onPick={(card) => setDraft((d) => addCopy(d, card))}
+                                onClose={() => setSearching(false)}
+                            >
+                            </WthCardSearch>
+                        )}
+
+                        {draft.cards.length === 0 && (
+                            <p className='rounded-control border border-dashed border-line-strong py-8 text-center text-sm text-ink-faint'>
+                                No Cards yet: add some or import a deck.
+                            </p>
+                        )}
+                        {mainCards.length > 0 && (
+                            <div>
+                                <h3 className='label mb-3 text-zone-main'>Main Deck</h3>
+                                <ul className='flex flex-wrap gap-3'>
+                                    {mainCards.map((e) => (
+                                        <DeckTile
+                                            key={e.card.id}
+                                            entry={e}
+                                            canAdd={canAddCopy(draft, e.card)}
+                                            onAdd={() => setDraft(addCopy(draft, e.card))}
+                                            onRemove={() => setDraft(removeCopy(draft, e.card.id))}
+                                        >
+                                        </DeckTile>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                        {extraCards.length > 0 && (
+                            <div>
+                                <h3 className='label mb-3 text-zone-extra'>Extra Deck</h3>
+                                <ul className='flex flex-wrap gap-3'>
+                                    {extraCards.map((e) => (
+                                        <DeckTile
+                                            key={e.card.id}
+                                            entry={e}
+                                            canAdd={canAddCopy(draft, e.card)}
+                                            onAdd={() => setDraft(addCopy(draft, e.card))}
+                                            onRemove={() => setDraft(removeCopy(draft, e.card.id))}
+                                        >
+                                        </DeckTile>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
-                    {importError && <p className='text-sm text-red-700'>{importError}</p>}
+                </Panel>
 
-                    {searching && (
-                        <WthCardSearch
-                            title='Add Cards to the combo'
-                            disabledIds={fullIds}
-                            onPick={(card) => setDraft((d) => addCopy(d, card))}
-                            onClose={() => setSearching(false)}
-                        >
-                        </WthCardSearch>
-                    )}
-
-                    {draft.cards.length === 0 && (
-                        <p className='text-sm text-gray-500'>No Cards yet: add some or import a deck.</p>
-                    )}
-                    {mainCards.length > 0 && (
-                        <div>
-                            <h3 className='mb-1 text-sm font-semibold'>Main Deck</h3>
-                            <ul className='flex flex-wrap gap-3'>
-                                {mainCards.map((e) => (
-                                    <DeckTile
-                                        key={e.card.id}
-                                        entry={e}
-                                        canAdd={canAddCopy(draft, e.card)}
-                                        onAdd={() => setDraft(addCopy(draft, e.card))}
-                                        onRemove={() => setDraft(removeCopy(draft, e.card.id))}
-                                    >
-                                    </DeckTile>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                    {extraCards.length > 0 && (
-                        <div>
-                            <h3 className='mb-1 text-sm font-semibold'>Extra Deck</h3>
-                            <ul className='flex flex-wrap gap-3'>
-                                {extraCards.map((e) => (
-                                    <DeckTile
-                                        key={e.card.id}
-                                        entry={e}
-                                        canAdd={canAddCopy(draft, e.card)}
-                                        onAdd={() => setDraft(addCopy(draft, e.card))}
-                                        onRemove={() => setDraft(removeCopy(draft, e.card.id))}
-                                    >
-                                    </DeckTile>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </section>
-
-                <section className='space-y-2'>
-                    <h2 className='text-lg font-semibold'>
-                        Starting Hand
-                        <span className='ml-2 text-sm font-normal text-gray-500'>
-                            {draft.startingHand.length}/{COMBO_DECK_UI.maxHand} cards
+                <Panel
+                    title='Starting Hand'
+                    actions={
+                        <span className='numeric text-caption text-ink-subtle'>
+                            <span className='text-ink'>{draft.startingHand.length}</span>/{COMBO_DECK_UI.maxHand} cards
                         </span>
-                    </h2>
+                    }
+                >
                     {mainCards.length === 0 ? (
-                        <p className='text-sm text-gray-500'>Add Main Deck cards to choose the hand.</p>
+                        <p className='text-sm text-ink-subtle'>Add Main Deck cards to choose the hand.</p>
                     ) : (
                         <ul className='flex flex-wrap gap-3'>
                             {mainCards.map((e) => {
                                 const inHand = handCopies(draft, e.card.id);
                                 return (
-                                    <li
-                                        key={e.card.id}
-                                        className={`w-20 rounded border p-1 text-center ${
-                                            inHand > 0 ? 'border-blue-500' : 'border-gray-200'
-                                        }`}
-                                    >
-                                        <img
-                                            src={cardImageUrl(e.card.id)}
-                                            alt={e.card.name}
-                                            draggable={false}
-                                            className='w-full'
-                                        >
-                                        </img>
-                                        <div className='flex items-center justify-center gap-1 text-sm'>
-                                            <button
-                                                type='button'
-                                                disabled={inHand === 0}
-                                                onClick={() => setDraft(setHandCopies(draft, e.card.id, inHand - 1))}
-                                                className='rounded border px-1.5 disabled:opacity-30'
-                                            >
-                                                −
-                                            </button>
-                                            <span>
-                                                {inHand}/{e.quantity}
-                                            </span>
-                                            <button
-                                                type='button'
-                                                disabled={
-                                                    inHand >= e.quantity ||
-                                                    draft.startingHand.length >= COMBO_DECK_UI.maxHand
-                                                }
-                                                onClick={() => setDraft(setHandCopies(draft, e.card.id, inHand + 1))}
-                                                className='rounded border px-1.5 disabled:opacity-30'
-                                            >
-                                                +
-                                            </button>
+                                    <li key={e.card.id} className='flex w-card-sm flex-col items-center gap-1.5 sm:w-card-md'>
+                                        <div className={cn('w-full rounded-card ring-2 transition-[box-shadow,opacity]', inHand > 0 ? 'ring-primary' : 'opacity-60 ring-transparent')}>
+                                            <CardTile card={e.card}></CardTile>
                                         </div>
+                                        <Stepper
+                                            itemLabel={e.card.name}
+                                            decrementLabel={`Remove one copy of ${e.card.name} from the hand`}
+                                            incrementLabel={`Add one copy of ${e.card.name} to the hand`}
+                                            onDecrement={() => setDraft(setHandCopies(draft, e.card.id, inHand - 1))}
+                                            onIncrement={() => setDraft(setHandCopies(draft, e.card.id, inHand + 1))}
+                                            decrementDisabled={inHand === 0}
+                                            incrementDisabled={
+                                                inHand >= e.quantity ||
+                                                draft.startingHand.length >= COMBO_DECK_UI.maxHand
+                                            }
+                                        >
+                                            {inHand}/{e.quantity}
+                                        </Stepper>
                                     </li>
                                 );
                             })}
                         </ul>
                     )}
-                </section>
+                </Panel>
             </div>
 
-            <div className={tab === 'steps' ? '' : 'hidden'}>
+            <div role='tabpanel' className={tab === 'steps' ? '' : 'hidden'}>
                 <ComboStepRecorder
                     key={JSON.stringify([draft.cards.map((c) => [c.card.id, c.quantity]), draft.startingHand])}
                     draft={draft}
@@ -301,27 +280,31 @@ export default function ComboEditor({ initial, saving, error, onSave, onDirtyCha
             </div>
 
             {dirty && problems.length > 0 && (
-                <ul className='list-disc pl-5 text-sm text-amber-700'>
-                    {problems.map((p) => (
-                        <li key={p}>{p}</li>
-                    ))}
-                </ul>
+                <Notice title='Before saving:'>
+                    <ul className='list-disc space-y-0.5 pl-5'>
+                        {problems.map((p) => (
+                            <li key={p}>{p}</li>
+                        ))}
+                    </ul>
+                </Notice>
             )}
-            {error && <p className='whitespace-pre-line text-sm text-red-700'>{error}</p>}
+            {error && <ErrorMessage>{error}</ErrorMessage>}
 
-            <div className='flex items-center gap-2'>
-                <button
-                    type='button'
-                    disabled={!canSave}
-                    onClick={() => onSave(draft)}
-                    className='rounded bg-blue-600 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-40'
-                >
+            {/* Save bar always visible at the bottom of the screen */}
+            <div className='sticky bottom-20 z-20 flex items-center gap-3 rounded-panel border border-line bg-surface-overlay/90 px-4 py-3 shadow-overlay backdrop-blur-md lg:bottom-4'>
+                <Button variant='primary' disabled={!canSave} onClick={() => onSave(draft)}>
                     {saving ? 'Saving...' : 'Save'}
-                </button>
+                </Button>
                 {dirty ? (
-                    <span className='text-sm text-amber-700'>Unsaved Changes</span>
+                    <span className='flex items-center gap-1.5 text-caption text-warning'>
+                        <span className='size-1.5 rounded-full bg-warning'></span>
+                        Unsaved Changes
+                    </span>
                 ) : (
-                    <span className='text-sm text-gray-500'>Saved</span>
+                    <span className='flex items-center gap-1.5 text-caption text-ink-subtle'>
+                        <CheckIcon className='size-3.5 text-success' />
+                        Saved
+                    </span>
                 )}
             </div>
         </div>

@@ -7,6 +7,12 @@ import { changedInstances, KIND_LABEL, cardOfInstance, materialsOf, stepTitle } 
 import { boardWithMoves, commitPending, describeMove, emptyPending, flipMove, removeStepsFrom, resolveZoneClick, tryAddMove, turnMove, ZONE_LABEL, type PendingStep } from '../comboRecorder';
 import type { Card } from '../types';
 import { useConfirm } from '../confirm/useConfirm';
+import { Button } from '../ui/Button';
+import { Field, Select, Textarea } from '../ui/Field';
+import { CloseIcon, PlusIcon, TrashIcon, UndoIcon } from '../ui/icons';
+import { Panel } from '../ui/Panel';
+import { ErrorMessage, Notice } from '../ui/States';
+import { cn, panelStyles } from '../ui/styles';
 
 interface Props {
     draft: ComboDraft;
@@ -150,16 +156,16 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
 
     return (
         <div className='grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]'>
-            <div className='space-y-3'>
+            <div className='min-w-0 space-y-4'>
                 {draft.cards.length === 0 && (
-                    <p className='text-sm text-gray-500'>Add cards to the decklist (Setup) before recording steps.</p>
+                    <Notice tone='info'>Add cards to the decklist (Setup) before recording steps.</Notice>
                 )}
                 {result.errors.length > 0 && (
-                    <p className='whitespace-pre-line rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700'>
+                    <ErrorMessage>
                         The steps already added no longer work with the decklist or the hand:{'\n'}
                         {result.errors.join('\n')}
                         {'\n'}Fix the Setup or delete the steps from the list.
-                    </p>
+                    </ErrorMessage>
                 )}
 
                 {display && draft.cards.length > 0 && (
@@ -174,80 +180,69 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
                         >
                         </ComboBoard>
 
-                        {message && <p className='text-sm text-red-700'>{message}</p>}
+                        {message && <ErrorMessage>{message}</ErrorMessage>}
 
-                        <div className='rounded border p-3' data-keep-selection>
+                        {/* Actions on the selected card */}
+                        <div className={cn(panelStyles, 'p-4', selectedCard && 'border-aether-800')} data-keep-selection>
                             {selectedCard ? (
-                                <div className='space-y-2'>
-                                    <p className='text-sm'>
-                                        <span className='font-semibold'>
+                                <div className='space-y-3'>
+                                    <div className='flex flex-wrap items-baseline gap-x-3 gap-y-1'>
+                                        <span className='label text-primary'>Selected</span>
+                                        <span className='font-display text-heading text-ink'>
                                             {cards.get(selectedCard.cardId)?.name ?? selectedCard.id}
                                         </span>
-                                        <span className='ml-2 text-gray-500'>
+                                        <span className='text-caption text-ink-subtle'>
                                             {ZONE_LABEL[selectedCard.zone]},{' '}
                                             {selectedCard.face === 'UP' ? 'face-up' : 'face-down'},{' '}
                                             {selectedCard.position === 'ATK' ? 'attack' : 'defense'}
                                         </span>
-                                    </p>
-                                    <div className='flex flex-wrap gap-2 text-sm'>
-                                        <button
-                                            type='button'
-                                            onClick={() => addMove(flipMove(selectedCard))}
-                                            className='rounded border px-2 py-1'
-                                        >
+                                    </div>
+                                    <div className='flex flex-wrap gap-2'>
+                                        <Button size='sm' onClick={() => addMove(flipMove(selectedCard))}>
                                             Flip face
-                                        </button>
-                                        <button
-                                            type='button'
-                                            onClick={() => addMove(turnMove(selectedCard))}
-                                            className='rounded border px-2 py-1'
-                                        >
+                                        </Button>
+                                        <Button size='sm' onClick={() => addMove(turnMove(selectedCard))}>
                                             ATK / DEF
-                                        </button>
-                                        <button
-                                            type='button'
+                                        </Button>
+                                        <Button
+                                            size='sm'
                                             onClick={() => setAttaching((a) => !a)}
-                                            className={`rounded border px-2 py-1 ${attaching ? 'bg-blue-100' : ''}`}
+                                            aria-pressed={attaching}
+                                            className={attaching ? 'border-secondary bg-arcane-950 text-arcane-200 shadow-glow-secondary' : undefined}
                                         >
                                             {attaching ? 'Click the monster...' : 'Attach as material'}
-                                        </button>
-                                        <button
-                                            type='button'
-                                            onClick={() => setPending({ ...pending, source: selectedCard.id })}
-                                            className='rounded border px-2 py-1'
-                                        >
+                                        </Button>
+                                        <Button size='sm' onClick={() => setPending({ ...pending, source: selectedCard.id })}>
                                             Use as source
-                                        </button>
-                                        <button
-                                            type='button'
+                                        </Button>
+                                        <Button
+                                            size='sm'
+                                            variant='ghost'
                                             onClick={() => {
                                                 setSelectedId(null);
                                                 setAttaching(false);
                                             }}
-                                            className='rounded border px-2 py-1'
                                         >
                                             Deselect
-                                        </button>
+                                        </Button>
                                     </div>
                                     {materials.length > 0 && (
                                         <div>
-                                            <p className='text-xs font-semibold uppercase text-gray-500'>
-                                                Attached materials
-                                            </p>
-                                            <ul className='mt-1 flex flex-wrap gap-2'>
+                                            <p className='label text-ink-subtle'>Attached materials</p>
+                                            <ul className='mt-2 flex flex-wrap gap-2'>
                                                 {materials.map((m) => (
                                                     <li key={m.id}>
                                                         <button
                                                             type='button'
                                                             onClick={() => selectCard(m.id)}
-                                                            className='w-14'
+                                                            className='focus-ring block w-card-xs rounded-card transition-transform hover:-translate-y-0.5'
                                                             title={cards.get(m.cardId)?.name}
                                                         >
                                                             <img
                                                                 src={cardImageUrl(m.cardId)}
                                                                 alt={cards.get(m.cardId)?.name ?? 'Material'}
                                                                 draggable={false}
-                                                                className='w-full'
+                                                                className='w-full rounded-card shadow-card'
                                                             >
                                                             </img>
                                                         </button>
@@ -258,7 +253,7 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
                                     )}
                                 </div>
                             ) : (
-                                <p className='text-sm text-gray-500'>
+                                <p className='text-sm text-ink-subtle'>
                                     Click a card to select it, then click the zone where it goes. Click the
                                     Deck, the Extra Deck, the Graveyard or the Banished pile to see its cards.
                                     Click anywhere else to deselect.
@@ -266,22 +261,20 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
                             )}
                         </div>
 
+                        {/* Content of a pile (Deck, Extra, GY, Banished) */}
                         {browsing && (
-                            <div className='rounded border border-blue-300 bg-blue-50 p-3' data-keep-selection>
-                                <div className='mb-2 flex items-center justify-between'>
-                                    <h3 className='text-sm font-semibold'>
-                                        {ZONE_LABEL[browsing]} ({browsed.length})
+                            <div className='animate-rise-in space-y-3 rounded-panel border border-aether-900 bg-aether-950/30 p-4' data-keep-selection>
+                                <div className='flex items-center justify-between'>
+                                    <h3 className='label text-aether-300'>
+                                        {ZONE_LABEL[browsing]} <span className='numeric text-ink-subtle'>({browsed.length})</span>
                                     </h3>
-                                    <button
-                                        type='button'
-                                        onClick={() => setBrowsing(null)}
-                                        className='text-sm underline'
-                                    >
+                                    <Button size='sm' variant='ghost' onClick={() => setBrowsing(null)}>
+                                        <CloseIcon className='size-4' />
                                         Close
-                                    </button>
+                                    </Button>
                                 </div>
                                 {browsed.length === 0 ? (
-                                    <p className='text-sm text-gray-500'>Empty.</p>
+                                    <p className='text-sm text-ink-subtle'>Empty.</p>
                                 ) : (
                                     <ul className='flex flex-wrap gap-2'>
                                         {browsed.map((c) => (
@@ -290,15 +283,16 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
                                                     type='button'
                                                     onClick={() => selectCard(c.id)}
                                                     title={cards.get(c.cardId)?.name}
-                                                    className={`w-16 rounded border bg-white p-0.5 ${
-                                                        c.id === selectedId ? 'border-blue-500' : 'border-gray-300'
-                                                    }`}
+                                                    className={cn(
+                                                        'focus-ring block w-card-sm rounded-card ring-2 transition-[transform,box-shadow] hover:-translate-y-0.5',
+                                                        c.id === selectedId ? 'ring-primary shadow-glow-primary' : 'ring-transparent',
+                                                    )}
                                                 >
                                                     <img
                                                         src={cardImageUrl(c.cardId)}
                                                         alt={cards.get(c.cardId)?.name ?? 'Card'}
                                                         draggable={false}
-                                                        className='w-full'
+                                                        className='w-full rounded-card shadow-card'
                                                     >
                                                     </img>
                                                 </button>
@@ -314,109 +308,124 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
 
             <div className='space-y-4'>
                 {base && (
-                    <section className='space-y-2 rounded border p-3'>
-                        <h3 className='font-semibold'>New step {draft.steps.length + 1}</h3>
-                        <label className='block text-sm'>
-                            Action
-                            <select
-                                value={pending.kind}
-                                onChange={(e) => setPending({ ...pending, kind: e.target.value as StepKind })}
-                                className='mt-1 w-full rounded border px-2 py-1'
-                            >
-                                {STEP_KINDS.map((k) => (
-                                    <option key={k} value={k}>
-                                        {KIND_LABEL[k]}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                        <div className='flex items-center gap-2 text-sm'>
-                            <span>Source:</span>
-                            <span className='font-semibold'>{sourceName ?? (pending.source ? '?' : 'none')}</span>
-                            {pending.source && (
-                                <button
-                                    type='button'
-                                    onClick={() => setPending({ ...pending, source: null })}
-                                    className='text-xs underline'
-                                >
-                                    Clear
-                                </button>
-                            )}
-                        </div>
-                        <label className='block text-sm'>
-                            Note
-                            <textarea
-                                value={pending.note}
-                                onChange={(e) => setPending({ ...pending, note: e.target.value })}
-                                maxLength={COMBO_LIMITS.maxNote}
-                                rows={2}
-                                placeholder='e.g. Search Snake-Eye Poplar'
-                                className='mt-1 w-full rounded border px-2 py-1'
-                            />
-                        </label>
+                    <Panel
+                        title={<>New step <span className='numeric text-ink'>{draft.steps.length + 1}</span></>}
+                        className='border-arcane-900'
+                    >
+                        <div className='space-y-4'>
+                            <Field label='Action'>
+                                {(control) => (
+                                    <Select
+                                        {...control}
+                                        value={pending.kind}
+                                        onChange={(e) => setPending({ ...pending, kind: e.target.value as StepKind })}
+                                    >
+                                        {STEP_KINDS.map((k) => (
+                                            <option key={k} value={k}>
+                                                {KIND_LABEL[k]}
+                                            </option>
+                                        ))}
+                                    </Select>
+                                )}
+                            </Field>
+                            <div className='flex items-center gap-2 rounded-control border border-line bg-surface-sunken px-3 py-2 text-sm'>
+                                <span className='label text-ink-subtle'>Source</span>
+                                <span className={cn('min-w-0 flex-1 truncate', sourceName || pending.source ? 'font-semibold text-ink' : 'text-ink-faint')}>
+                                    {sourceName ?? (pending.source ? '?' : 'none')}
+                                </span>
+                                {pending.source && (
+                                    <button
+                                        type='button'
+                                        onClick={() => setPending({ ...pending, source: null })}
+                                        className='focus-ring rounded text-caption text-ink-subtle underline-offset-2 hover:text-ink hover:underline'
+                                    >
+                                        Clear
+                                    </button>
+                                )}
+                            </div>
+                            <Field label='Note'>
+                                {(control) => (
+                                    <Textarea
+                                        {...control}
+                                        value={pending.note}
+                                        onChange={(e) => setPending({ ...pending, note: e.target.value })}
+                                        maxLength={COMBO_LIMITS.maxNote}
+                                        rows={2}
+                                        placeholder='e.g. Search Snake-Eye Poplar'
+                                        className='min-h-16'
+                                    />
+                                )}
+                            </Field>
 
-                        <div className='text-sm'>
-                            <p className='font-semibold'>Moves ({pending.moves.length})</p>
-                            {pending.moves.length === 0 ? (
-                                <p className='text-gray-500'>
-                                    None yet. A step with no moves is fine (e.g. an effect that changes nothing).
+                            <div className='space-y-1.5'>
+                                <p className='label text-ink-subtle'>
+                                    Moves <span className='numeric text-ink-faint'>({pending.moves.length})</span>
                                 </p>
-                            ) : (
-                                <ol className='list-decimal pl-5'>
-                                    {pending.moves.map((m, i) => (
-                                        <li key={i}>{describeMove(m, cards)}</li>
-                                    ))}
-                                </ol>
-                            )}
-                        </div>
+                                {pending.moves.length === 0 ? (
+                                    <p className='text-caption text-ink-faint'>
+                                        None yet. A step with no moves is fine (e.g. an effect that changes nothing).
+                                    </p>
+                                ) : (
+                                    <ol className='space-y-1'>
+                                        {pending.moves.map((m, i) => (
+                                            <li key={i} className='flex gap-2 rounded-control bg-surface-sunken px-2.5 py-1.5 text-caption text-ink-muted'>
+                                                <span className='numeric text-arcane-300'>{i + 1}</span>
+                                                {describeMove(m, cards)}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                )}
+                            </div>
 
-                        <div className='flex flex-wrap gap-2'>
-                            <button
-                                type='button'
-                                onClick={addStep}
-                                disabled={draft.steps.length >= COMBO_LIMITS.maxSteps}
-                                className='rounded bg-blue-600 px-3 py-1 text-white disabled:opacity-40'
-                            >
-                                Add Step
-                            </button>
-                            <button
-                                type='button'
-                                disabled={pending.moves.length === 0}
-                                onClick={() =>
-                                    setPending({ ...pending, moves: pending.moves.slice(0, -1) })
-                                }
-                                className='rounded border px-3 py-1 disabled:opacity-40'
-                            >
-                                Undo last move
-                            </button>
-                            <button
-                                type='button'
-                                onClick={() => {
-                                    setPending(emptyPending());
-                                    setMessage(null);
-                                }}
-                                className='rounded border px-3 py-1'
-                            >
-                                Clear step
-                            </button>
+                            <div className='flex flex-wrap gap-2'>
+                                <Button
+                                    size='sm'
+                                    variant='primary'
+                                    onClick={addStep}
+                                    disabled={draft.steps.length >= COMBO_LIMITS.maxSteps}
+                                >
+                                    <PlusIcon className='size-4' />
+                                    Add Step
+                                </Button>
+                                <Button
+                                    size='sm'
+                                    disabled={pending.moves.length === 0}
+                                    onClick={() =>
+                                        setPending({ ...pending, moves: pending.moves.slice(0, -1) })
+                                    }
+                                >
+                                    <UndoIcon className='size-4' />
+                                    Undo last move
+                                </Button>
+                                <Button
+                                    size='sm'
+                                    variant='ghost'
+                                    onClick={() => {
+                                        setPending(emptyPending());
+                                        setMessage(null);
+                                    }}
+                                >
+                                    Clear step
+                                </Button>
+                            </div>
                         </div>
-                    </section>
+                    </Panel>
                 )}
 
-                <section>
-                    <h3 className='mb-1 font-semibold'>Steps ({draft.steps.length})</h3>
+                <Panel title='Steps' actions={<span className='numeric text-caption text-ink-subtle'>{draft.steps.length}</span>} flush>
                     {draft.steps.length === 0 ? (
-                        <p className='text-sm text-gray-500'>No Steps yet.</p>
+                        <p className='p-panel text-sm text-ink-subtle'>No Steps yet.</p>
                     ) : (
-                        <ol className='space-y-1 text-sm'>
+                        <ol className='scrollbar-thin max-h-[50dvh] space-y-1 overflow-y-auto p-2'>
                             {draft.steps.map((s, i) => (
-                                <li key={i} className='flex items-start justify-between gap-2 rounded border p-2'>
-                                    <div>
-                                        <p className='font-semibold'>
-                                            {i + 1}. {stepTitle(s, cards)}
-                                        </p>
-                                        {s.note && <p className='text-gray-600'>{s.note}</p>}
-                                        <p className='text-xs text-gray-400'>
+                                <li key={i} className='group flex items-start gap-3 rounded-control px-2 py-2 hover:bg-surface-hover'>
+                                    <span className='numeric mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-arcane-900 text-micro font-bold text-arcane-200'>
+                                        {i + 1}
+                                    </span>
+                                    <div className='min-w-0 flex-1'>
+                                        <p className='text-sm font-semibold text-ink'>{stepTitle(s, cards)}</p>
+                                        {s.note && <p className='text-caption text-ink-muted'>{s.note}</p>}
+                                        <p className='numeric text-micro text-ink-faint'>
                                             {s.moves.length} move{s.moves.length === 1 ? '' : 's'}
                                         </p>
                                     </div>
@@ -433,29 +442,15 @@ export default function ComboStepRecorder({ draft, onStepsChange }: Props) {
                                                 ? 'Delete this step'
                                                 : 'Delete this step and all the following ones'
                                         }
-                                        className='shrink-0 rounded bg-red-600 p-1.5 text-white hover:bg-red-700'
+                                        className='focus-ring grid size-7 shrink-0 place-items-center rounded-control text-ink-faint transition-colors hover:bg-danger/10 hover:text-danger'
                                     >
-                                        <svg
-                                            viewBox='0 0 24 24'
-                                            className='h-4 w-4'
-                                            fill='none'
-                                            stroke='currentColor'
-                                            strokeWidth={2}
-                                            strokeLinecap='round'
-                                            strokeLinejoin='round'
-                                            aria-hidden='true'
-                                        >
-                                            <polyline points='3 6 5 6 21 6'></polyline>
-                                            <path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'></path>
-                                            <path d='M10 11v6M14 11v6'></path>
-                                            <path d='M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2'></path>
-                                        </svg>
+                                        <TrashIcon className='size-4' />
                                     </button>
                                 </li>
                             ))}
                         </ol>
                     )}
-                </section>
+                </Panel>
             </div>
         </div>
     );

@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { duplicateCombo, listCombos } from '../api';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { BoltIcon, CopyIcon, PlusIcon } from '../ui/icons';
+import { Page, PageHeader } from '../ui/PageHeader';
+import { EmptyState, ErrorMessage, LoadingState } from '../ui/States';
+import { buttonStyles } from '../ui/styles';
 
 export default function ComboListPage() {
     const combos = useQuery({ queryKey: ['combos'], queryFn: listCombos });
@@ -12,40 +18,69 @@ export default function ComboListPage() {
     });
 
     return (
-        <main className='mx-auto max-w-4xl p-8'>
-            <div className='flex items-center justify-between'>
-                <h1 className='text-2xl font-bold'>Combos</h1>
-                <Link to='/combos/new' className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'>
-                    New Combo
-                </Link>
-            </div>
+        <Page>
+            <PageHeader
+                eyebrow='Combo Lab'
+                title='Combos'
+                description='Record your lines step by step on the field and replay them whenever you want.'
+                actions={
+                    <Link to='/combos/new' className={buttonStyles({ variant: 'primary' })}>
+                        <PlusIcon className='size-4' />
+                        New Combo
+                    </Link>
+                }
+            ></PageHeader>
 
-            {combos.isPending && <p className='mt-4 text-gray-500'>Loading...</p>}
-            {combos.isError && <p className='mt-4 text-red-600'>{combos.error.message}</p>}
-            {combos.data?.length === 0 && <p className='mt-4 text-gray-500'>No Combos yet.</p>}
-            {duplicate.isError && <p className='mt-4 text-red-600'>{duplicate.error.message}</p>}
+            {combos.isPending && <LoadingState></LoadingState>}
+            {combos.isError && <ErrorMessage>{combos.error.message}</ErrorMessage>}
+            {duplicate.isError && <ErrorMessage>{duplicate.error.message}</ErrorMessage>}
+            {combos.data?.length === 0 && (
+                <EmptyState
+                    icon={<BoltIcon />}
+                    title='No Combos yet.'
+                    description='Pick a decklist and a starting hand, then record every move on the field.'
+                    action={<Link to='/combos/new' className={buttonStyles({ variant: 'primary' })}><PlusIcon className='size-4' />New Combo</Link>}
+                ></EmptyState>
+            )}
 
-            <ul>
-                {combos.data?.map((c) => (
-                    <li key={c.id} className='flex items-stretch gap-2'>
-                        <Link to={`/combos/${c.id}`} className='block flex-1 rounded border p-3 hover:bg-gray-50'>
-                            <span className='font-semibold'>{c.name}</span>
-                            <span className='ml-2 text-sm text-gray-500'>
-                                {c.stepCount} step{c.stepCount === 1 ? '' : 's'}
-                            </span>
-                            {c.description && <p className='text-sm text-gray-600'>{c.description}</p>}
-                        </Link>
-                        <button
-                            type='button'
-                            disabled={duplicate.isPending}
-                            onClick={() => duplicate.mutate(c.id)}
-                            className='rounded border px-3 text-sm hover:bg-gray-50 disabled:opacity-40'
-                        >
-                            {duplicate.isPending && duplicate.variables === c.id ? 'Copying...' : 'Duplicate'}
-                        </button>
-                    </li>
-                ))}
-            </ul>
-        </main>
+            {combos.data && combos.data.length > 0 && (
+                <ul className='grid gap-3 md:grid-cols-2'>
+                    {combos.data.map((c) => (
+                        <li key={c.id} className='group flex rounded-panel border border-line bg-surface-raised shadow-panel transition-colors hover:border-arcane-800'>
+                            <Link to={`/combos/${c.id}`} className='focus-ring flex min-w-0 flex-1 items-start gap-4 rounded-l-panel p-panel'>
+                                <span aria-hidden='true' className='grid size-11 shrink-0 place-items-center rounded-control border border-arcane-800 bg-arcane-950 text-secondary'>
+                                    <BoltIcon className='size-5' />
+                                </span>
+                                <span className='min-w-0 flex-1 space-y-1'>
+                                    <span className='block truncate font-display text-heading text-ink group-hover:text-arcane-300'>{c.name}</span>
+                                    {c.description && <span className='line-clamp-2 block text-sm text-ink-subtle'>{c.description}</span>}
+                                    <span className='flex items-center gap-3 pt-1'>
+                                        <Badge tone='secondary'>
+                                            {c.stepCount} step{c.stepCount === 1 ? '' : 's'}
+                                        </Badge>
+                                        <span className='text-caption text-ink-faint'>
+                                            Updated on {new Date(c.updatedAt).toLocaleDateString('it-IT')}
+                                        </span>
+                                    </span>
+                                </span>
+                            </Link>
+                            <div className='flex items-start border-l border-line p-2'>
+                                <Button
+                                    size='icon'
+                                    variant='ghost'
+                                    disabled={duplicate.isPending}
+                                    loading={duplicate.isPending && duplicate.variables === c.id}
+                                    onClick={() => duplicate.mutate(c.id)}
+                                    aria-label={`Duplicate ${c.name}`}
+                                    title='Duplicate'
+                                >
+                                    {!(duplicate.isPending && duplicate.variables === c.id) && <CopyIcon className='size-4' />}
+                                </Button>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </Page>
     );
 }

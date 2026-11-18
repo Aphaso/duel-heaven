@@ -5,6 +5,9 @@ import { createCombo, getCombo, updateCombo } from '../api';
 import ComboEditor from '../components/ComboEditor';
 import { draftFromCombo, emptyComboDraft, toComboPayload, type ComboDraft } from '../comboDraft';
 import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
+import { ChevronLeftIcon } from '../ui/icons';
+import { Page, PageHeader } from '../ui/PageHeader';
+import { ErrorMessage, LoadingState } from '../ui/States';
 
 export default function ComboEditPage() {
     const { id } = useParams<{ id: string }>();
@@ -41,29 +44,28 @@ function ComboEditScreen({ id }: { id: string | undefined }) {
     const combo = comboQuery.data;
 
     return (
-        <main className='mx-auto max-w-6xl p-8'>
-            <Link to={id ? `/combos/${id}` : '/combos'} className='text-sm text-blue-700 hover:underline'>
-                ← Back
+        <Page className='space-y-6'>
+            <Link to={id ? `/combos/${id}` : '/combos'} className='focus-ring inline-flex items-center gap-1 rounded-control text-sm text-ink-subtle hover:text-primary'>
+                <ChevronLeftIcon className='size-4' />
+                Back
             </Link>
 
-            {id && comboQuery.isPending && <p className='mt-4 text-gray-500'>Loading...</p>}
-            {id && comboQuery.isError && <p className='mt-4 text-red-600'>{comboQuery.error.message}</p>}
+            {id && comboQuery.isPending && <LoadingState></LoadingState>}
+            {id && comboQuery.isError && <ErrorMessage>{comboQuery.error.message}</ErrorMessage>}
 
             {(!id || combo) && (
                 <>
-                    <h1 className='mt-2 text-2xl font-bold'>{combo ? `Edit: ${combo.name}` : 'New Combo'}</h1>
-                    <div className='mt-4'>
-                        <ComboEditor
-                            initial={combo ? draftFromCombo(combo) : emptyComboDraft()}
-                            saving={save.isPending}
-                            error={save.isError ? save.error.message : null}
-                            onSave={(draft) => save.mutate(draft)}
-                            onDirtyChange={setDirty}
-                        >
-                        </ComboEditor>
-                    </div>
+                    <PageHeader eyebrow={combo ? 'Edit Combo' : 'Combo Lab'} title={combo ? combo.name : 'New Combo'}></PageHeader>
+                    <ComboEditor
+                        initial={combo ? draftFromCombo(combo) : emptyComboDraft()}
+                        saving={save.isPending}
+                        error={save.isError ? save.error.message : null}
+                        onSave={(draft) => save.mutate(draft)}
+                        onDirtyChange={setDirty}
+                    >
+                    </ComboEditor>
                 </>
             )}
-        </main>
+        </Page>
     );
 }

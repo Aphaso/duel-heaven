@@ -3,6 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { deleteCombo, duplicateCombo, getCombo } from '../api';
 import ComboPlayer from '../components/ComboPlayer';
 import { useConfirm } from '../confirm/useConfirm';
+import { Button } from '../ui/Button';
+import { ChevronLeftIcon, CopyIcon, PencilIcon, TrashIcon } from '../ui/icons';
+import { Page, PageHeader } from '../ui/PageHeader';
+import { ErrorMessage, LoadingState } from '../ui/States';
+import { buttonStyles } from '../ui/styles';
 
 export default function ComboPage() {
     const { id } = useParams<{ id: string }>();
@@ -46,53 +51,44 @@ export default function ComboPage() {
     }
 
     return (
-        <main className='mx-auto max-w-6xl p-8'>
-            <Link to='/combos' className='text-sm text-blue-700 hover:underline'>
-                ← All Combos
+        <Page className='space-y-6'>
+            <Link to='/combos' className='focus-ring inline-flex items-center gap-1 rounded-control text-sm text-ink-subtle hover:text-primary'>
+                <ChevronLeftIcon className='size-4' />
+                All Combos
             </Link>
 
-            {combo.isPending && <p className='mt-4 text-gray-500'>Loading...</p>}
-            {combo.isError && <p className='mt-4 text-red-600'>{combo.error.message}</p>}
+            {combo.isPending && <LoadingState></LoadingState>}
+            {combo.isError && <ErrorMessage>{combo.error.message}</ErrorMessage>}
 
             {combo.data && (
                 <>
-                    <div className='mt-2 flex items-start justify-between gap-4'>
-                        <div>
-                            <h1 className='text-2xl font-bold'>{combo.data.name}</h1>
-                            {combo.data.description && (
-                                <p className='mt-1 text-gray-700'>{combo.data.description}</p>
-                            )}
-                        </div>
-                        <div className='flex gap-2'>
-                            <button
-                                type='button'
-                                disabled={remove.isPending}
-                                onClick={() => void askDelete(combo.data.name)}
-                                className='rounded border border-red-600 px-3 py-1 text-red-700 disabled:opacity-40'
-                            >
-                                Delete
-                            </button>
-                            <button
-                                type='button'
-                                disabled={duplicate.isPending}
-                                onClick={() => duplicate.mutate()}
-                                className='rounded border px-3 py-1 disabled:opacity-40'
-                            >
-                                {duplicate.isPending ? 'Copying...' : 'Duplicate'}
-                            </button>
-                            <Link to={`/combos/${combo.data.id}/edit`} className='rounded border px-3 py-1'>
-                                Edit
-                            </Link>
-                        </div>
-                    </div>
-                    {remove.isError && <p className='mt-2 text-red-600'>{remove.error.message}</p>}
-                    {duplicate.isError && <p className='mt-2 text-red-600'>{duplicate.error.message}</p>}
+                    <PageHeader
+                        eyebrow='Combo'
+                        title={combo.data.name}
+                        description={combo.data.description ?? undefined}
+                        actions={
+                            <>
+                                <Button size='sm' variant='danger-ghost' disabled={remove.isPending} onClick={() => void askDelete(combo.data.name)}>
+                                    <TrashIcon className='size-4' />
+                                    Delete
+                                </Button>
+                                <Button size='sm' loading={duplicate.isPending} onClick={() => duplicate.mutate()}>
+                                    {!duplicate.isPending && <CopyIcon className='size-4' />}
+                                    {duplicate.isPending ? 'Copying...' : 'Duplicate'}
+                                </Button>
+                                <Link to={`/combos/${combo.data.id}/edit`} className={buttonStyles({ variant: 'primary', size: 'sm' })}>
+                                    <PencilIcon className='size-4' />
+                                    Edit
+                                </Link>
+                            </>
+                        }
+                    ></PageHeader>
+                    {remove.isError && <ErrorMessage>{remove.error.message}</ErrorMessage>}
+                    {duplicate.isError && <ErrorMessage>{duplicate.error.message}</ErrorMessage>}
 
-                    <div className='mt-6'>
-                        <ComboPlayer key={combo.data.id} combo={combo.data} />
-                    </div>
+                    <ComboPlayer key={combo.data.id} combo={combo.data} />
                 </>
             )}
-        </main>
+        </Page>
     );
 }

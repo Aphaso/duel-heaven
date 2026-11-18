@@ -128,6 +128,32 @@ export const ChevronDownIcon = (p: IconProps) => (
     </Icon>
 );
 
+export const SkipStartIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <path d='M6 5v14M18 6l-8.5 6 8.5 6V6Z' />
+    </Icon>
+);
+
+export const CopyIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <rect x='8' y='8' width='12' height='12' rx='2' />
+        <path d='M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8' />
+    </Icon>
+);
+
+export const GripIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <path d='M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01' strokeWidth={3} />
+    </Icon>
+);
+
+export const UndoIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <path d='M9 14 4 9l5-5' />
+        <path d='M4 9h10.5a5.5 5.5 0 0 1 0 11H11' />
+    </Icon>
+);
+
 export const SwapIcon = (p: IconProps) => (
     <Icon {...p}>
         <path d='M4 8h13l-3.5-3.5M20 16H7l3.5 3.5' />
