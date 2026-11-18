@@ -5,6 +5,13 @@ import { register } from '../auth/authApi';
 import { useAuth } from '../auth/useAuth';
 import { useUsernameCheck } from '../hooks/useUsernameCheck';
 import { GoogleAccess } from '../auth/GoogleAccess';
+import { AuthDivider, AuthLayout } from '../layout/AuthLayout';
+import { UsernameInput } from '../components/UsernameInput';
+import { usernameHintTone } from '../components/usernameHintTone';
+import { Button } from '../ui/Button';
+import { Field, Input, PasswordInput } from '../ui/Field';
+import { ErrorMessage } from '../ui/States';
+import { linkStyles } from '../ui/styles';
 
 export default function RegisterPage() {
     const { status, signIn } = useAuth();
@@ -15,7 +22,8 @@ export default function RegisterPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const { candidate, lengthOk, taken, hint: usernameHint } = useUsernameCheck(username);
+    const { candidate, lengthOk, checking, taken, available, hint: usernameHint } = useUsernameCheck(username);
+    const hintTone = usernameHintTone({ candidate, lengthOk, checking, available });
 
     const mutation = useMutation({
         mutationFn: register,
@@ -49,78 +57,67 @@ export default function RegisterPage() {
     }
 
     return (
-        <main className="mx-auto max-w-sm p-6 space-y-4">
-            <h1 className="text-2xl font-semibold">Create Account</h1>
-            <form onSubmit={onSubmit} className="space-y-3">
-                <label className="block space-y-1">
-                    <span className="text-sm">Name</span>
-                    <input
-                        required
-                        autoComplete="name"
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        className="w-full rounded border px-3 py-2"
-                    >
-                    </input>
-                </label>
-                <label className="block space-y-1">
-                    <span className="text-sm">Username (shown publicly)</span>
-                    <input
-                        required
-                        autoComplete="username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                        className="w-full rounded border px-3 py-2"
-                    >
-                    </input>
-                    <span className={`text-xs ${taken ? 'text-red-600' : ''}`}>{usernameHint}</span>
-                </label>
-                <label className="block space-y-1">
-                    <span className="text-sm">Email</span>
-                    <input
-                        type="email"
-                        required
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full rounded border px-3 py-2"
-                    >
-                    </input>
-                </label>
-                <label className="block space-y-1">
-                    <span className="text-sm">Password</span>
-                    <input
-                        type="password"
-                        required
-                        minLength={8}
-                        autoComplete="new-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full rounded border px-3 py-2"
-                    >
-                    </input>
-                    <span className="text-xs">At least 8 characters</span>
-                </label>
-                {mutation.isError && (
-                    <p role="alert" className="text-sm text-red-600">
-                        {mutation.error.message}
-                    </p>
-                )}
-                <button
-                    type="submit"
-                    disabled={!canSubmit}
-                    className="w-full rounded border px-3 py-2 disabled:opacity-50"
-                >
+        <AuthLayout
+            title='Create your account'
+            description='Join Duel Heaven and start building.'
+            footer={<>Already registered? <Link to='/login' className={linkStyles}>Log in</Link></>}
+        >
+            <form onSubmit={onSubmit} className='space-y-4'>
+                <Field label='Name'>
+                    {(control) => (
+                        <Input
+                            {...control}
+                            required
+                            autoComplete='name'
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
+                        ></Input>
+                    )}
+                </Field>
+                <Field label='Username (shown publicly)' hint={usernameHint} hintTone={hintTone} error={taken ? usernameHint : undefined}>
+                    {(control) => (
+                        <UsernameInput
+                            status={hintTone}
+                            {...control}
+                            required
+                            autoComplete='username'
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                        ></UsernameInput>
+                    )}
+                </Field>
+                <Field label='Email'>
+                    {(control) => (
+                        <Input
+                            {...control}
+                            type='email'
+                            required
+                            autoComplete='email'
+                            placeholder='you@example.com'
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        ></Input>
+                    )}
+                </Field>
+                <Field label='Password' hint='At least 8 characters' hintTone={password.length >= 8 ? 'success' : 'neutral'}>
+                    {(control) => (
+                        <PasswordInput
+                            {...control}
+                            required
+                            minLength={8}
+                            autoComplete='new-password'
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        ></PasswordInput>
+                    )}
+                </Field>
+                {mutation.isError && <ErrorMessage>{mutation.error.message}</ErrorMessage>}
+                <Button type='submit' variant='primary' size='lg' disabled={!canSubmit} loading={mutation.isPending} className='w-full'>
                     {mutation.isPending ? 'Creating…' : 'Create account'}
-                </button>
+                </Button>
             </form>
-            <div className='flex items-center gap-3 text-xs text-gray-500'>
-                <hr className='flex-1'></hr>or<hr className='flex-1'></hr>
-            </div>
+            <AuthDivider></AuthDivider>
             <GoogleAccess redirectTo='/'></GoogleAccess>
-            <p className="text-sm">
-                Already registered? <Link to="/login" className="underline">Log in</Link>
-            </p>
-        </main>
+        </AuthLayout>
     );
 }

@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { googleLogin } from './authApi';
 import { useAuth } from './useAuth';
+import { ErrorMessage, LoadingState } from '../ui/States';
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
@@ -65,10 +66,11 @@ export function GoogleAccess({ redirectTo }: { redirectTo: string }) {
                 callback: (response) => mutate(response.credential),
             });
             window.google.accounts.id.renderButton(buttonRef.current, {
-                theme: 'outline',
+                theme: 'filled_black',
                 size: 'large',
                 text: 'continue_with',
-                width: 320,
+                // Google accepts a width between 200 and 400 px: it follows the container
+                width: Math.min(400, Math.max(200, buttonRef.current.offsetWidth)),
             });
         }).catch((e: Error) => {
             if (!cancelled) {
@@ -82,19 +84,15 @@ export function GoogleAccess({ redirectTo }: { redirectTo: string }) {
     }, [mutate]);
 
     if (!CLIENT_ID) {
-        return <p className='text-sm text-gray-500'>Google sign-in is not configured.</p>
+        return <p className='text-center text-caption text-ink-faint'>Google sign-in is not configured.</p>
     }
 
     return (
-        <div className='space-y-2'>
-            <div ref={buttonRef}></div>
-            {loadError && <p className='text-sm text-red-600'>{loadError}</p>}
-            {mutation.isPending && <p className='text-sm'>Signing in...</p>}
-            {mutation.isError && (
-                <p role='alert' className='text-sm text-red-600'>
-                    {mutation.error.message}
-                </p>
-            )}
+        <div className='space-y-3'>
+            <div ref={buttonRef} className='flex min-h-10 w-full justify-center [color-scheme:light]'></div>
+            {loadError && <ErrorMessage>{loadError}</ErrorMessage>}
+            {mutation.isPending && <LoadingState label='Signing in...' className='justify-center py-1' />}
+            {mutation.isError && <ErrorMessage>{mutation.error.message}</ErrorMessage>}
         </div>
     );
 }
