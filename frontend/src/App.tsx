@@ -1,6 +1,5 @@
-import { createBrowserRouter, Navigate, NavLink, Outlet, RouterProvider } from 'react-router';
+import { createBrowserRouter, Link, Navigate, RouterProvider } from 'react-router';
 import { RequireAuth } from './auth/RequireAuth';
-import { useAuth } from './auth/useAuth';
 import CardSearchPage from './pages/CardSearchPage';
 import DeckPage from './pages/DeckPage';
 import DecksPage from './pages/DecksPage';
@@ -23,50 +22,9 @@ import PurchasedPlaylistPage from './pages/PurchasedPlaylistPage';
 import PurchasedComboPage from './pages/PurchasedComboPage';
 import AccountPaymentsPage from './pages/AccountPaymentsPage';
 import AccountPage from './pages/AccountPage';
-import { SupportChat } from './SupportChat';
-
-function navClass({ isActive }: { isActive: boolean }) {
-  return isActive
-    ? 'font-semibold text-blue-700'
-    : 'text-gray-600 hover:text-gray-900';
-}
-
-/** Bar on top + point where the page chosen by the router is shown. */
-function Layout() {
-  const { user, signOut } = useAuth();
-
-  return (
-    <>
-      <header className='border-b border-gray-200'>
-        <nav className='mx-auto flex max-w-6xl items-center gap-6 px-8 py-3'>
-          <span className='font-bold'>Duel Heaven</span>
-          <NavLink to='/cards' className={navClass}>Cards</NavLink>
-          <NavLink to='/decks' className={navClass}>Decks</NavLink>
-          <NavLink to='/wth' className={navClass}>WTH?</NavLink>
-          <NavLink to='/combos' className={navClass}>Combos</NavLink>
-          <NavLink to='/playlists' className={navClass}>Playlists</NavLink>
-          <NavLink to='/store' className={navClass}>Store</NavLink>
-          <NavLink to='/purchases' className={navClass}>Purchased</NavLink>
-          <NavLink to='/account/payments' className={navClass}>Payments</NavLink>
-          <div className='ml-auto flex items-center gap-4 text-sm text-gray-600'>
-            <NavLink to='/account' end className={navClass} title={user?.displayName ?? undefined}>
-              {user?.username ? `@${user.username}` : user?.email}
-            </NavLink>
-            <button
-              type='button'
-              onClick={() => void signOut()}
-              className='rounded border border-gray-300 px-3 py-1 hover:bg-gray-50'
-            >
-              Log out
-            </button>
-          </div>
-        </nav>
-      </header>
-      <Outlet></Outlet>
-      <SupportChat></SupportChat>
-    </>
-  );
-}
+import { AppShell } from './layout/AppShell';
+import { buttonStyles } from './ui/styles';
+import { EmptyState } from './ui/States';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage></LoginPage> },
@@ -76,7 +34,7 @@ const router = createBrowserRouter([
     element: <RequireAuth></RequireAuth>,
     children: [
       {
-        element: <Layout></Layout>,
+        element: <AppShell></AppShell>,
         children: [
           { path: '/', element: <Navigate to='/cards' replace></Navigate> },
           { path: '/cards', element: <CardSearchPage></CardSearchPage> },
@@ -101,7 +59,18 @@ const router = createBrowserRouter([
           { path: '/purchases/:playlistId/combos/:comboId', element: <PurchasedComboPage></PurchasedComboPage> },
           { path: '/account', element: <AccountPage></AccountPage> },
           { path: '/account/payments', element: <AccountPaymentsPage></AccountPaymentsPage> },
-          { path: '*', element: <p className='p-8'>Page Not Found.</p>}
+          {
+            path: '*',
+            element: (
+              <main className='mx-auto max-w-page px-gutter py-16 lg:px-gutter-lg'>
+                <EmptyState
+                  title='Page Not Found.'
+                  description='This page does not exist or has been moved.'
+                  action={<Link to='/cards' className={buttonStyles({ variant: 'primary' })}>Back to Cards</Link>}
+                ></EmptyState>
+              </main>
+            ),
+          },
         ],
       },
     ],

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ConfirmContext, type ConfirmFn, type ConfirmOptions } from './ConfirmContext';
+import { Button } from '../ui/Button';
+import { AlertIcon } from '../ui/icons';
 
 interface Request {
     options: ConfirmOptions;
@@ -59,35 +61,36 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                         answer(false);
                     }
                 }}
-                className='m-auto w-full max-w-md rounded-lg p-0 shadow-xl backdrop:bg-black/40'
+                className='m-auto w-[calc(100%-2rem)] max-w-md animate-rise-in rounded-panel border border-line bg-surface-overlay p-0 text-ink shadow-overlay backdrop:bg-night-950/70 backdrop:backdrop-blur-sm'
             >
                 {options && (
-                    <div className='space-y-4 p-6'>
-                        <h2 id='confirm-title' className='text-lg font-semibold'>
-                            {options.title}
-                        </h2>
-                        {options.message && (
-                            <p className='whitespace-pre-line text-sm text-gray-700'>{options.message}</p>
-                        )}
-                        <div className='flex justify-end gap-2'>
-                            <button
-                                type='button'
-                                onClick={() => answer(false)}
-                                className='rounded border border-gray-300 px-4 py-2 hover:bg-gray-50'
-                            >
+                    <div className='space-y-5 p-6'>
+                        <div className='flex gap-4'>
+                            {options.destructive && (
+                                <span className='grid size-10 shrink-0 place-items-center rounded-full bg-danger/15 text-danger'>
+                                    <AlertIcon />
+                                </span>
+                            )}
+                            <div className='space-y-2'>
+                                <h2 id='confirm-title' className='font-display text-heading text-ink'>
+                                    {options.title}
+                                </h2>
+                                {options.message && (
+                                    <p className='whitespace-pre-line text-sm text-ink-muted'>{options.message}</p>
+                                )}
+                            </div>
+                        </div>
+                        <div className='flex flex-col-reverse gap-2 sm:flex-row sm:justify-end'>
+                            <Button variant='ghost' onClick={() => answer(false)}>
                                 Cancel
-                            </button>
-                            <button
-                                type='button'
+                            </Button>
+                            <Button
+                                variant={options.destructive ? 'danger' : 'primary'}
                                 onClick={() => answer(true)}
-                                className={`rounded px-4 py-2 text-white ${
-                                    options.destructive
-                                        ? 'bg-red-600 hover:bg-red-700'
-                                        : 'bg-blue-600 hover:bg-blue-700'
-                                }`}
+                                autoFocus
                             >
                                 {options.confirmLabel ?? 'Confirm'}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 )}

@@ -1,11 +1,12 @@
+import { Button } from '../ui/Button';
+import { ChevronLeftIcon, ChevronRightIcon } from '../ui/icons';
+
 interface Props {
     page: number;
     totalPages: number;
     disabled?: boolean;
     onChange: (page: number) => void;
 }
-
-const button = 'rounded border border-gray-300 px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40';
 
 export default function Pagination({
     page,
@@ -17,16 +18,18 @@ export default function Pagination({
         return null;
     }
     return (
-        <nav className='mt-3 flex items-center justify-center gap-3 text-sm'>
-            <button className={button} disabled={disabled || page <= 1} onClick={() => onChange(page - 1)}>
+        <nav aria-label='Pagination' className='mt-4 flex items-center justify-center gap-3'>
+            <Button size='sm' disabled={disabled || page <= 1} onClick={() => onChange(page - 1)}>
+                <ChevronLeftIcon className='size-4' />
                 Previous
-            </button>
-            <span>
-                Page {page} of {totalPages}
+            </Button>
+            <span className='numeric text-caption text-ink-subtle'>
+                Page <span className='text-ink'>{page}</span> of {totalPages}
             </span>
-            <button className={button} disabled={disabled || page >= totalPages} onClick={() => onChange(page + 1)}>
+            <Button size='sm' disabled={disabled || page >= totalPages} onClick={() => onChange(page + 1)}>
                 Next
-            </button>
+                <ChevronRightIcon className='size-4' />
+            </Button>
         </nav>
     );
 }

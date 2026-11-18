@@ -1,1 +1,371 @@
 @import "tailwindcss";
+
+/*
+ * ============================================================================
+ *  DUEL HEAVEN — Design System "Celestial Arena"
+ * ----------------------------------------------------------------------------
+ *  Tailwind v4: la configurazione è CSS-first. Ogni variabile in @theme genera
+ *  le utility corrispondenti (es. --color-aether-400 → bg-aether-400,
+ *  text-aether-400, border-aether-400...).
+ *
+ *  Le palette di default di Tailwind (gray, blue, red...) restano disponibili
+ *  finché il redesign non avrà migrato tutte le pagine; poi si potranno
+ *  rimuovere con `--color-*: initial;` in testa al blocco @theme.
+ * ============================================================================
+ */
+
+@theme {
+  /* ------------------------------------------------------------------------
+   *  TIPOGRAFIA
+   * --------------------------------------------------------------------- */
+  --font-display: "Chakra Petch", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Scala semantica (affianca text-xs…text-9xl di default) */
+  --text-micro: 0.625rem;               /* 10px — badge, livello/rank sulle mini-carte */
+  --text-micro--line-height: 0.875rem;
+  --text-caption: 0.75rem;              /* 12px — metadati, label */
+  --text-caption--line-height: 1rem;
+  --text-body: 0.9375rem;               /* 15px — testo corrente */
+  --text-body--line-height: 1.5rem;
+  --text-heading: 1.25rem;              /* 20px — titoli di pannello */
+  --text-heading--line-height: 1.75rem;
+  --text-heading--font-weight: 600;
+  --text-title: 1.75rem;                /* 28px — titolo di pagina */
+  --text-title--line-height: 2.25rem;
+  --text-title--font-weight: 700;
+  --text-display: 2.5rem;               /* 40px — hero / store */
+  --text-display--line-height: 2.75rem;
+  --text-display--font-weight: 700;
+  --text-display--letter-spacing: -0.01em;
+
+  --tracking-label: 0.08em;             /* label MAIUSCOLE in font-display */
+
+  /* ------------------------------------------------------------------------
+   *  COLORI — scale di brand
+   * --------------------------------------------------------------------- */
+
+  /* Night: neutri freddi bluastri, base di superfici e testo */
+  --color-night-50: #eef0fa;
+  --color-night-100: #d9ddf0;
+  --color-night-200: #b4bad9;
+  --color-night-300: #8e95bd;
+  --color-night-400: #6a7199;
+  --color-night-500: #4e5478;
+  --color-night-600: #3a3f5e;
+  --color-night-700: #2a2e48;
+  --color-night-800: #1c1f35;
+  --color-night-900: #131528;
+  --color-night-950: #0a0b18;
+
+  /* Aether: primario — azioni, link, focus, Main Deck (ologramma duel disk) */
+  --color-aether-50: #e6fbff;
+  --color-aether-100: #c2f3ff;
+  --color-aether-200: #8ae8ff;
+  --color-aether-300: #4dd9ff;
+  --color-aether-400: #1fc6f5;
+  --color-aether-500: #06a8d9;
+  --color-aether-600: #0786b0;
+  --color-aether-700: #0c6a8c;
+  --color-aether-800: #105470;
+  --color-aether-900: #12455c;
+  --color-aether-950: #082c3d;
+
+  /* Arcane: secondario — combo, playback, Extra Deck */
+  --color-arcane-50: #f3efff;
+  --color-arcane-100: #e7deff;
+  --color-arcane-200: #d0c0ff;
+  --color-arcane-300: #b396ff;
+  --color-arcane-400: #9566ff;
+  --color-arcane-500: #7c3ff5;
+  --color-arcane-600: #6a2bdb;
+  --color-arcane-700: #5823b5;
+  --color-arcane-800: #481f92;
+  --color-arcane-900: #3b1c75;
+  --color-arcane-950: #250f4f;
+
+  /* Relic: accento — store, prezzi, contenuti premium, Side Deck */
+  --color-relic-50: #fff9e6;
+  --color-relic-100: #fff0bf;
+  --color-relic-200: #ffe08a;
+  --color-relic-300: #ffcc4d;
+  --color-relic-400: #f5b521;
+  --color-relic-500: #db990b;
+  --color-relic-600: #b57606;
+  --color-relic-700: #8f5a0a;
+  --color-relic-800: #73480f;
+  --color-relic-900: #5f3c11;
+  --color-relic-950: #372005;
+
+  /* ------------------------------------------------------------------------
+   *  COLORI — token semantici (usare questi nei componenti)
+   * --------------------------------------------------------------------- */
+  --color-surface-sunken: #06070f;      /* input, zone del campo, well */
+  --color-surface-base: #0a0b18;        /* sfondo app */
+  --color-surface-raised: #131528;      /* card, pannelli */
+  --color-surface-overlay: #1c1f35;     /* popover, modali, menu */
+  --color-surface-hover: #22263f;       /* hover su righe/elementi */
+
+  --color-line: #2a2e48;                /* bordi standard */
+  --color-line-strong: #3a3f5e;         /* bordi input, separatori marcati */
+
+  --color-ink: #eef0fa;                 /* testo primario */
+  --color-ink-muted: #b4bad9;           /* testo secondario */
+  --color-ink-subtle: #8e95bd;          /* metadati, placeholder */
+  --color-ink-faint: #6a7199;           /* disabilitato */
+  --color-ink-inverse: #0a0b18;         /* testo su fondi chiari (relic, aether) */
+
+  --color-primary: #1fc6f5;
+  --color-primary-hover: #4dd9ff;
+  --color-primary-active: #06a8d9;
+  --color-secondary: #9566ff;
+  --color-accent: #f5b521;
+
+  --color-success: #2fd08a;
+  --color-warning: #ff9f43;
+  --color-danger: #ff4d6a;
+  --color-danger-hover: #ff6b84;
+  --color-info: #1fc6f5;
+
+  /* Zone del deck */
+  --color-zone-main: #1fc6f5;
+  --color-zone-extra: #9566ff;
+  --color-zone-side: #f5b521;
+
+  /* ------------------------------------------------------------------------
+   *  COLORI — dominio Yu-Gi-Oh! (frameType / attribute delle carte)
+   * --------------------------------------------------------------------- */
+  --color-frame-normal: #c9a35b;
+  --color-frame-effect: #c2723a;
+  --color-frame-ritual: #4e7bd1;
+  --color-frame-fusion: #8b55b8;
+  --color-frame-synchro: #e8e8ee;
+  --color-frame-xyz: #34343c;
+  --color-frame-link: #2e6fb8;
+  --color-frame-spell: #1f9c8a;
+  --color-frame-trap: #b8457a;
+  --color-frame-token: #8a8f98;
+  --color-frame-skill: #3b7ac9;
+
+  --color-attr-dark: #8e5bd6;
+  --color-attr-light: #f2d45c;
+  --color-attr-earth: #a07a4a;
+  --color-attr-water: #3b9ce8;
+  --color-attr-fire: #e8503b;
+  --color-attr-wind: #4cc28a;
+  --color-attr-divine: #e8b84a;
+
+  /* ------------------------------------------------------------------------
+   *  SPAZIATURA & DIMENSIONI  (base 4px: p-1 = 4px, p-4 = 16px)
+   * --------------------------------------------------------------------- */
+  --spacing: 0.25rem;
+
+  --spacing-gutter: 1rem;               /* padding orizzontale pagina mobile   → px-gutter */
+  --spacing-gutter-lg: 2rem;            /* padding orizzontale pagina desktop  → lg:px-gutter-lg */
+  --spacing-section: 2.5rem;            /* distanza tra sezioni di pagina      → gap-section */
+  --spacing-panel: 1.25rem;             /* padding interno pannelli            → p-panel */
+  --spacing-topbar: 3.5rem;             /* altezza header                      → h-topbar */
+  --spacing-sidebar: 22rem;             /* colonna laterale (ricerca/dettagli) → w-sidebar */
+
+  /* Larghezze carta (ratio 59:86) → w-card-sm, w-card-md... */
+  --spacing-card-xs: 2.75rem;           /* chip in liste/step combo */
+  --spacing-card-sm: 4rem;              /* griglia deck densa */
+  --spacing-card-md: 5.5rem;            /* griglia deck standard */
+  --spacing-card-lg: 8rem;              /* risultati ricerca */
+  --spacing-card-xl: 14rem;             /* dettaglio carta */
+
+  --container-page: 80rem;              /* max-w-page */
+  --container-guide: 44rem;             /* max-w-guide per guide WTH */
+
+  --aspect-card: 59 / 86;               /* aspect-card */
+
+  /* ------------------------------------------------------------------------
+   *  RAGGI, OMBRE, MOVIMENTO
+   * --------------------------------------------------------------------- */
+  --radius-card: 0.25rem;               /* angoli di una carta reale */
+  --radius-control: 0.5rem;             /* bottoni, input, chip */
+  --radius-panel: 0.875rem;             /* pannelli, modali */
+
+  --shadow-panel: 0 1px 0 0 rgb(255 255 255 / 0.04) inset, 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  --shadow-overlay: 0 24px 48px -16px rgb(0 0 0 / 0.75);
+  --shadow-card: 0 2px 6px rgb(0 0 0 / 0.5);
+  --shadow-glow-primary: 0 0 0 1px rgb(31 198 245 / 0.5), 0 0 18px rgb(31 198 245 / 0.35);
+  --shadow-glow-secondary: 0 0 0 1px rgb(149 102 255 / 0.5), 0 0 18px rgb(149 102 255 / 0.35);
+  --shadow-glow-accent: 0 0 0 1px rgb(245 181 33 / 0.55), 0 0 18px rgb(245 181 33 / 0.35);
+
+  --ease-snappy: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+
+  --animate-fade-in: fade-in 160ms ease-out;
+  --animate-rise-in: rise-in 220ms var(--ease-snappy);
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes rise-in {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ *  PONTE TEMPORANEO (legacy bridge) — DA RIMUOVERE A MIGRAZIONE FINITA
+ *  Rimappa le palette di default usate dalle pagine non ancora ridisegnate
+ *  su toni compatibili con il tema scuro. La scala gray è invertita
+ *  (50 = superficie scura, 900 = testo chiaro). Quando nessun file userà più
+ *  gray/red/blue/amber/green/yellow, eliminare l'intero blocco.
+ * ------------------------------------------------------------------------- */
+@theme {
+  --color-gray-50: #171a30;
+  --color-gray-100: #1c1f35;
+  --color-gray-200: #2a2e48;
+  --color-gray-300: #3a3f5e;
+  --color-gray-400: #6a7199;
+  --color-gray-500: #8e95bd;
+  --color-gray-600: #a3a9cc;
+  --color-gray-700: #c4c9e4;
+  --color-gray-800: #d9ddf0;
+  --color-gray-900: #eef0fa;
+
+  --color-red-50: #2a1220;
+  --color-red-100: #3a1527;
+  --color-red-300: #7a2a3d;
+  --color-red-600: #f0435f;
+  --color-red-700: #ff6b84;
+  --color-red-800: #ff8fa2;
+
+  --color-blue-50: #0b2433;
+  --color-blue-100: #0e3346;
+  --color-blue-300: #105470;
+  --color-blue-400: #1fc6f5;
+  --color-blue-500: #1fc6f5;
+  --color-blue-600: #0786b0;
+  --color-blue-700: #0c9bcc;
+  --color-blue-900: #8ae8ff;
+
+  --color-amber-50: #2b1f08;
+  --color-amber-100: #3a2a0a;
+  --color-amber-300: #8f5a0a;
+  --color-amber-400: #f5b521;
+  --color-amber-700: #ffcc4d;
+  --color-amber-800: #ffe08a;
+
+  --color-green-50: #0c2a1e;
+  --color-green-100: #103826;
+  --color-green-300: #1d6b4a;
+  --color-green-700: #2fd08a;
+  --color-green-800: #6ee7b0;
+
+  --color-yellow-100: #3a330a;
+}
+
+/* ----------------------------------------------------------------------------
+ *  UTILITY CUSTOM
+ * ------------------------------------------------------------------------- */
+
+/* Etichetta tecnica: "MAIN DECK · 40" */
+@utility label {
+  font-family: var(--font-display);
+  font-size: var(--text-caption);
+  line-height: var(--text-caption--line-height);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+/* Numeri allineati: ATK/DEF, prezzi, conteggi */
+@utility numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cornice Pendulum: metà effetto / metà magia */
+@utility bg-frame-pendulum {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-frame-effect) 0% 50%,
+    var(--color-frame-spell) 50% 100%
+  );
+}
+
+/* Bordo "olografico" per elementi premium (playlist in vendita) */
+@utility holo-border {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--color-surface-raised), var(--color-surface-raised)) padding-box,
+    linear-gradient(135deg, var(--color-aether-400), var(--color-arcane-400), var(--color-relic-400)) border-box;
+}
+
+/* Skeleton di caricamento */
+@utility skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-surface-raised) 0%,
+    var(--color-surface-overlay) 50%,
+    var(--color-surface-raised) 100%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+/* Scrollbar sottile coerente col tema scuro */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+
+/* Focus ring standard per elementi interattivi */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ *  BASE
+ *  Il tema si attiva con la classe `theme-arena` sul <body> (index.html).
+ * ------------------------------------------------------------------------- */
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* In Tailwind v4 un `border` senza colore usa currentColor: sul tema scuro
+     sarebbe troppo acceso, quindi il default diventa --color-line. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-line);
+  }
+
+  .theme-arena {
+    color-scheme: dark;
+    min-height: 100dvh;
+    background-color: var(--color-surface-base);
+    background-image:
+      radial-gradient(60rem 30rem at 15% -10%, rgb(31 198 245 / 0.08), transparent 70%),
+      radial-gradient(50rem 30rem at 95% 0%, rgb(149 102 255 / 0.08), transparent 70%);
+    background-attachment: fixed;
+    color: var(--color-ink);
+  }
+
+  .theme-arena ::placeholder {
+    color: var(--color-ink-faint);
+  }
+
+  .theme-arena ::selection {
+    background-color: rgb(31 198 245 / 0.35);
+    color: var(--color-ink);
+  }
+}

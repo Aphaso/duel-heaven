@@ -1,6 +1,9 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuth } from './useAuth';
 import { sectionRoot } from './redirect';
+import { Button } from '../ui/Button';
+import { AlertIcon } from '../ui/icons';
+import { EmptyState, LoadingState } from '../ui/States';
 
 /** Layoute route: show children pages only to logged user */
 export function RequireAuth() {
@@ -8,15 +11,21 @@ export function RequireAuth() {
     const location = useLocation();
 
     if (status === 'loading') {
-        return <p className='p-6'>Loading...</p>
+        return (
+            <div className='grid min-h-dvh place-items-center'>
+                <LoadingState />
+            </div>
+        );
     }
     if (status === 'error') {
         return (
-            <div className='p-6 space-y-3'>
-                <p>Can't reach the server.</p>
-                <button className='rounded border px-3 py-1' onClick={() => void signOut()}>
-                    Back to Login
-                </button>
+            <div className='grid min-h-dvh place-items-center px-gutter'>
+                <EmptyState
+                    icon={<AlertIcon />}
+                    title="Can't reach the server."
+                    description='Check your connection and try again in a moment.'
+                    action={<Button variant='primary' onClick={() => void signOut()}>Back to Login</Button>}
+                ></EmptyState>
             </div>
         );
     }
