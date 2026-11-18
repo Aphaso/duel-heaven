@@ -5,6 +5,10 @@ import { blocksOf, isSameList, moveEntry, normalize, toDraft, withQuantity, type
 import type { Card, DeckDetail, DeckSection } from '../types';
 import CardSearchPanel from './CardSearchPanel';
 import DeckSectionView from './DeckSectionView';
+import ZoneMeter from './ZoneMeter';
+import { Button } from '../ui/Button';
+import { CheckIcon } from '../ui/icons';
+import { ErrorMessage, Notice } from '../ui/States';
 
 const SECTIONS: { section: DeckSection; title: string }[] = [
     { section: 'MAIN', title: 'Main Deck' },
@@ -91,55 +95,73 @@ export default function DeckEditor({ deck, onDirtyChange }: Props) {
     const mainIncomplete = counts.MAIN < limits.mainMin;
 
     return (
-        <div className='mt-2 grid gap-8 lg:grid-cols-[1fr_22rem]'>
-            <div>
-                <div className='sticky top-0 z-20 -mx-2 mt-3 flex flex-wrap items-center gap-3 bg-white/90 px-2 py-3 backdrop-blur'>
-                    <button onClick={() => save.mutate()} disabled={!dirty || save.isPending} className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40'>
-                        {save.isPending ? 'Saving...' : 'Save'}
-                    </button>
-                    <button onClick={discard} disabled={!dirty || save.isPending} className='rounded border border-gray-300 px-4 py-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40'>
-                        Discard Changes
-                    </button>
-                    {dirty ? (
-                        <span className='text-sm text-amber-700'>Unsaved Changes</span>
-                    ) : (
-                        <span className='text-sm text-gray-500'>Saved</span>
-                    )}
+        <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_var(--spacing-sidebar)]'>
+            <div className='min-w-0 space-y-4'>
+                {/* Toolbar stuck under the top bar: save state and counters of the three zones */}
+                <div className='sticky top-topbar z-20 -mx-gutter border-y border-line bg-surface-base/85 px-gutter py-3 backdrop-blur-md sm:mx-0 sm:rounded-panel sm:border sm:px-4'>
+                    <div className='flex flex-wrap items-center gap-x-6 gap-y-3'>
+                        <div className='flex items-center gap-2'>
+                            <Button variant='primary' size='sm' onClick={() => save.mutate()} disabled={!dirty} loading={save.isPending}>
+                                {save.isPending ? 'Saving...' : 'Save'}
+                            </Button>
+                            <Button variant='ghost' size='sm' onClick={discard} disabled={!dirty || save.isPending}>
+                                Discard Changes
+                            </Button>
+                            {dirty ? (
+                                <span className='flex items-center gap-1.5 text-caption text-warning'>
+                                    <span className='size-1.5 rounded-full bg-warning'></span>
+                                    Unsaved Changes
+                                </span>
+                            ) : (
+                                <span className='flex items-center gap-1.5 text-caption text-ink-subtle'>
+                                    <CheckIcon className='size-3.5 text-success' />
+                                    Saved
+                                </span>
+                            )}
+                        </div>
+                        <div className='flex flex-1 flex-wrap gap-x-5 gap-y-2 sm:justify-end'>
+                            {SECTIONS.map(({ section, title }) => (
+                                <ZoneMeter
+                                    key={section}
+                                    section={section}
+                                    label={title.replace(' Deck', '')}
+                                    count={counts[section]}
+                                    max={maxOf[section]}
+                                    min={section === 'MAIN' ? limits.mainMin : undefined}
+                                    className='w-24'
+                                ></ZoneMeter>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 {mainIncomplete && (
-                    <p className='mt-2 text-sm text-amber-700'>
-                        Incomplete Main Deck: {counts.MAIN}/{limits.mainMin} cards
-                    </p>
+                    <Notice>
+                        Incomplete Main Deck: <span className='numeric'>{counts.MAIN}/{limits.mainMin}</span> cards
+                    </Notice>
                 )}
 
-                {save.isError && (
-                    <p className='mt-4 whitespace-pre-line rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700'>
-                        {save.error.message}
-                    </p>
-                )}
+                {save.isError && <ErrorMessage>{save.error.message}</ErrorMessage>}
 
-                <div className='mt-6'>
-                    {SECTIONS.map(({ section, title }) => (
-                        <DeckSectionView
-                            key={section}
-                            section={section}
-                            title={title}
-                            blocks={blocksOf(draft, section)}
-                            count={counts[section]}
-                            min={section === 'MAIN' ? limits.mainMin : undefined}
-                            max={maxOf[section]}
-                            canAddCopy={(card) => canAdd(card, section)}
-                            busy={save.isPending}
-                            onChange={(card, quantity) => setQuantity(card, section, quantity)}
-                            onReorder={reorder}
-                        >
-                        </DeckSectionView>
-                    ))}
-                </div>
+                {SECTIONS.map(({ section, title }) => (
+                    <DeckSectionView
+                        key={section}
+                        section={section}
+                        title={title}
+                        blocks={blocksOf(draft, section)}
+                        count={counts[section]}
+                        min={section === 'MAIN' ? limits.mainMin : undefined}
+                        max={maxOf[section]}
+                        canAddCopy={(card) => canAdd(card, section)}
+                        busy={save.isPending}
+                        onChange={(card, quantity) => setQuantity(card, section, quantity)}
+                        onReorder={reorder}
+                    >
+                    </DeckSectionView>
+                ))}
             </div>
 
-            <aside className='lg:sticky lg:top-4 lg:self-start'>
+            <aside className='lg:sticky lg:top-[calc(var(--spacing-topbar)+1rem)] lg:max-h-[calc(100dvh-var(--spacing-topbar)-2rem)] lg:self-start'>
                 <CardSearchPanel copiesByCard={copiesByCard} busy={save.isPending} canAdd={canAdd} onAdd={addCard}>
                 </CardSearchPanel>
             </aside>

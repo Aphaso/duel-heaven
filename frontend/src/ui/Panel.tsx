@@ -7,9 +7,11 @@ interface Props extends Omit<HTMLAttributes<HTMLElement>, 'title'> {
     actions?: ReactNode;
     /** Removes the inner padding, for lists that go edge to edge. */
     flush?: boolean;
+    /** Classes for the body (e.g. to make it a scrollable flex column). */
+    bodyClassName?: string;
 }
 
-export function Panel({ title, actions, flush, className, children, ...rest }: Props) {
+export function Panel({ title, actions, flush, bodyClassName, className, children, ...rest }: Props) {
     return (
         <section className={cn(panelStyles, className)} {...rest}>
             {(title || actions) && (
@@ -18,7 +20,7 @@ export function Panel({ title, actions, flush, className, children, ...rest }: P
                     {actions && <div className='flex items-center gap-2'>{actions}</div>}
                 </header>
             )}
-            <div className={flush ? undefined : 'p-panel'}>{children}</div>
+            <div className={cn(!flush && 'p-panel', bodyClassName)}>{children}</div>
         </section>
     );
 }

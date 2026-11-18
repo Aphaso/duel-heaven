@@ -6,6 +6,11 @@ import SidePatternView from './SidePatternView';
 import { draftFromPattern, emptyDraft, toPayload, type PatternDraft } from '../sidePatternDraft';
 import type { DeckDetail } from '../types';
 import { useConfirm } from '../confirm/useConfirm';
+import { Button } from '../ui/Button';
+import { AlertIcon, PencilIcon, PlusIcon, SwapIcon } from '../ui/icons';
+import { Panel } from '../ui/Panel';
+import { EmptyState, ErrorMessage, LoadingState } from '../ui/States';
+import { cn } from '../ui/styles';
 
 interface Props {
     deck: DeckDetail
@@ -68,10 +73,10 @@ export default function SidePatternsPanel({
     }
 
     if (isLoading) {
-        return <p>Loading...</p>;
+        return <LoadingState></LoadingState>;
     }
     if (error) {
-        return <p className='text-red-700'>{error.message}</p>;
+        return <ErrorMessage>{error.message}</ErrorMessage>;
     }
 
     if (mode.kind === 'edit') {
@@ -98,53 +103,59 @@ export default function SidePatternsPanel({
     const selected = patterns.find((p) => p.id === mode.id) ?? patterns[0] ?? null;
 
     return (
-        <div className='space-y-3'>
+        <div className='space-y-5'>
             <div className='flex flex-wrap items-center gap-2'>
-                {patterns.map((p) => (
-                    <button
-                        key={p.id}
-                        type='button'
-                        onClick={() => setMode({ kind: 'view', id: p.id })}
-                        className={`rounded border px-2 py-1 text-sm ${
-                            p.id === selected?.id ? 'bg-blue-600 text-white' : ''
-                        }`}
-                    >
-                        {p.opponentDeckName}
-                        {p.issues.length > 0 ? ' ⚠' : ''}
-                    </button>
-                ))}
-                <button
-                    type='button'
-                    onClick={() => setMode({ kind: 'edit', id: null })}
-                    className='rounded border border-dashed px-2 py-1 text-sm'
-                >
-                    + New Pattern
-                </button>
+                <span className='label mr-1 text-ink-subtle'>Vs</span>
+                {patterns.map((p) => {
+                    const active = p.id === selected?.id;
+                    return (
+                        <button
+                            key={p.id}
+                            type='button'
+                            onClick={() => setMode({ kind: 'view', id: p.id })}
+                            aria-pressed={active}
+                            className={cn(
+                                'focus-ring inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors',
+                                active
+                                    ? 'border-primary bg-aether-950 text-ink shadow-glow-primary'
+                                    : 'border-line-strong bg-surface-raised text-ink-muted hover:border-night-500 hover:text-ink',
+                            )}
+                        >
+                            {p.opponentDeckName}
+                            {p.issues.length > 0 && <AlertIcon aria-label='Needs attention' className='size-3.5 text-warning' />}
+                        </button>
+                    );
+                })}
+                <Button size='sm' variant='ghost' onClick={() => setMode({ kind: 'edit', id: null })} className='rounded-full border border-dashed border-line-strong'>
+                    <PlusIcon className='size-4' />
+                    New Pattern
+                </Button>
             </div>
 
             {selected ? (
-                <>
+                <Panel
+                    title={<>Vs <span className='text-ink'>{selected.opponentDeckName}</span></>}
+                    actions={
+                        <>
+                            <Button size='sm' onClick={() => setMode({ kind: 'edit', id: selected.id })}>
+                                <PencilIcon className='size-4' />
+                                Edit
+                            </Button>
+                            <Button size='sm' variant='danger' disabled={remove.isPending} onClick={() => void askDelete(selected.id, selected.opponentDeckName)}>
+                                Delete
+                            </Button>
+                        </>
+                    }
+                >
                     <SidePatternView pattern={selected} />
-                    <div className='flex gap-2'>
-                        <button
-                            type='button'
-                            onClick={() => setMode({ kind: 'edit', id: selected.id })}
-                            className='rounded border px-3 py-1'
-                        >
-                            Edit
-                        </button>
-                        <button
-                            type='button'
-                            disabled={remove.isPending}
-                            onClick={() => void askDelete(selected.id, selected.opponentDeckName)}
-                            className='rounded border border-red-600 px-3 py-1 text-red-700 disabled:opacity-40'
-                        >
-                            Delete
-                        </button>
-                    </div>
-                </>
+                </Panel>
             ) : (
-                <p className='text-sm text-gray-500'>No Side Patterns yet.</p>
+                <EmptyState
+                    icon={<SwapIcon />}
+                    title='No Side Patterns yet.'
+                    description='Plan which cards go out and which come in from the Side Deck against a specific opponent.'
+                    action={<Button variant='primary' onClick={() => setMode({ kind: 'edit', id: null })}><PlusIcon className='size-4' />New Pattern</Button>}
+                ></EmptyState>
             )}
         </div>
     );

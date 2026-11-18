@@ -1,6 +1,8 @@
 import { CATEGORY_LABEL, type Block } from '../draft';
 import type { Card, DeckSection } from '../types';
 import CardBlock from './CardBlock';
+import { ZONE_STYLES } from './deckZones';
+import { cn, panelStyles } from '../ui/styles';
 
 interface Props {
     section: DeckSection;
@@ -28,33 +30,42 @@ export default function DeckSectionView({
     onReorder,
 }: Props) {
     const belowMin = min !== undefined && count < min;
+    const zone = ZONE_STYLES[section];
 
     return (
-        <section className='mt-8 first:mt-0'>
-            <h2 className='flex items-baseline gap-2 text-xl font-semibold'>
-                {title}
-                <span className={`text-sm font-normal ${belowMin ? 'text-amber-700' : 'text-gray-500'}`}>
-                    {count}/{max}
-                    {min !== undefined && ` (${min} minimum)`}
+        <section aria-label={title} className={cn(panelStyles, 'border-l-2', zone.border)}>
+            <header className='flex items-center justify-between gap-3 border-b border-line px-panel py-3'>
+                <h2 className='flex items-center gap-2.5 font-display text-heading text-ink'>
+                    <span aria-hidden='true' className={cn('size-2 rounded-full', zone.dot)}></span>
+                    {title}
+                </h2>
+                <span className={cn('numeric text-sm', belowMin ? 'text-warning' : 'text-ink-subtle')}>
+                    <span className={belowMin ? undefined : 'text-ink'}>{count}</span>/{max}
+                    {min !== undefined && <span className='ml-1 text-caption text-ink-faint'>(min {min})</span>}
                 </span>
-            </h2>
+            </header>
 
-            {blocks.length === 0 ? (
-                <p className='mt-2 text-sm text-gray-500'>No Cards.</p>
-            ) : (
-                blocks.map((block) => (
-                    <div key={block.category} className='mt-3'>
-                        {/* No label for the Extra Deck */}
-                        {section !== 'EXTRA' && (
-                            <p className='mb-1 text-xs font-medium- uppercase tracking-wide text-gray-500'>
-                                {CATEGORY_LABEL[block.category]}
-                            </p>
-                        )}
-                        <CardBlock entries={block.entries} busy={busy} canAddCopy={canAddCopy} onChange={onChange} onReorder={onReorder}>
-                        </CardBlock>
-                    </div>
-                ))
-            )}
+            <div className='space-y-5 p-panel'>
+                {blocks.length === 0 ? (
+                    <p className='rounded-control border border-dashed border-line-strong py-6 text-center text-sm text-ink-faint'>
+                        No Cards. Add them from the search panel.
+                    </p>
+                ) : (
+                    blocks.map((block) => (
+                        <div key={block.category}>
+                            {/* No label for the Extra Deck */}
+                            {section !== 'EXTRA' && (
+                                <p className='label mb-2 text-ink-subtle'>
+                                    {CATEGORY_LABEL[block.category]}
+                                    <span className='numeric ml-2 text-ink-faint'>{block.entries.reduce((sum, e) => sum + e.quantity, 0)}</span>
+                                </p>
+                            )}
+                            <CardBlock entries={block.entries} busy={busy} canAddCopy={canAddCopy} onChange={onChange} onReorder={onReorder}>
+                            </CardBlock>
+                        </div>
+                    ))
+                )}
+            </div>
         </section>
     );
 }

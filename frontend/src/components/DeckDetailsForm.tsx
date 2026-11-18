@@ -2,6 +2,12 @@ import { useState, type SyntheticEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateDeck } from '../api';
 import type { DeckDetail } from '../types';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { Field, Input } from '../ui/Field';
+import { PencilIcon } from '../ui/icons';
+import { ErrorMessage } from '../ui/States';
+import { panelStyles } from '../ui/styles';
 
 export default function DeckDetailsForm({ deck }: { deck: DeckDetail }) {
     const quertClient = useQueryClient();
@@ -40,39 +46,41 @@ export default function DeckDetailsForm({ deck }: { deck: DeckDetail }) {
 
     if (!editing) {
         return (
-            <div className='flex flex-wrap items-start justify-between gap-3'>
-                <div className='min-w-0'>
-                    <h1 className='break-words text-3xl font-bold'>{deck.name}</h1>
-                    {deck.archetype && <p className='mt-1 text-gray-600'>{deck.archetype}</p>}
+            <header className='flex flex-wrap items-start justify-between gap-4'>
+                <div className='min-w-0 space-y-2'>
+                    <p className='label text-primary'>Deck</p>
+                    <h1 className='font-display text-title break-words text-ink'>{deck.name}</h1>
+                    {deck.archetype && <Badge tone='secondary'>{deck.archetype}</Badge>}
                 </div>
-                <button onClick={startEditing} className='rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100'>
+                <Button size='sm' onClick={startEditing}>
+                    <PencilIcon className='size-4' />
                     Edit
-                </button>
-            </div>
+                </Button>
+            </header>
         );
     }
 
     return (
-        <form onSubmit={handleSubmit} className='rounded border border-gray-200 p-4'>
-            <label className='block text-sm font-medium'>
-                Deck Name
-                <input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} className='mt-1 w-full rounded border border-gray-300 px-3 py-2 font-normal'></input>
-            </label>
-            <label className='mt-3 block text-sm font-medium'>
-                Archetype (Optional)
-                <input value={archetype} onChange={(e) => setArchetype(e.target.value)} maxLength={100} className='mt-1 w-full rounded border border-gray-300 px-3 py-2 font-normal'></input>
-            </label>
-
-            <div className='mt-4 flex gap-2'>
-                <button type='submit' disabled={!name.trim() || unchanged || update.isPending} className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40'>
-                    {update.isPending ? 'Saving...' : 'Save'}
-                </button>
-                <button type='button' onClick={cancel} disabled={update.isPending} className='rounded border border-gray-300 px-4 py-2 hover:bg-gray-100 disabled:opacity-40'>
-                    Cancel
-                </button>
+        <form onSubmit={handleSubmit} className={`${panelStyles} space-y-4 p-panel`}>
+            <div className='grid gap-4 sm:grid-cols-2'>
+                <Field label='Deck Name'>
+                    {(control) => <Input {...control} value={name} onChange={(e) => setName(e.target.value)} maxLength={100} autoFocus></Input>}
+                </Field>
+                <Field label='Archetype (Optional)'>
+                    {(control) => <Input {...control} value={archetype} onChange={(e) => setArchetype(e.target.value)} maxLength={100}></Input>}
+                </Field>
             </div>
 
-            {update.isError && <p className='mt-3 whitespace-pre-line text-sm text-red-600'>{update.error.message}</p>}
+            {update.isError && <ErrorMessage>{update.error.message}</ErrorMessage>}
+
+            <div className='flex gap-2'>
+                <Button type='submit' variant='primary' disabled={!name.trim() || unchanged} loading={update.isPending}>
+                    {update.isPending ? 'Saving...' : 'Save'}
+                </Button>
+                <Button variant='ghost' onClick={cancel} disabled={update.isPending}>
+                    Cancel
+                </Button>
+            </div>
         </form>
     );
 }

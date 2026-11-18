@@ -8,7 +8,7 @@ export function cn(...classes: Array<string | false | null | undefined>): string
     return classes.filter(Boolean).join(' ');
 }
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'accent';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'danger-ghost' | 'accent';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
 const buttonBase =
@@ -21,6 +21,7 @@ const buttonVariants: Record<ButtonVariant, string> = {
     secondary: 'border border-line-strong bg-surface-raised text-ink hover:border-aether-700 hover:bg-surface-hover',
     ghost: 'text-ink-muted hover:bg-surface-hover hover:text-ink',
     danger: 'border border-danger/40 bg-danger/10 text-danger hover:border-danger hover:bg-danger/20',
+    'danger-ghost': 'text-danger/80 hover:bg-danger/10 hover:text-danger',
     accent: 'bg-accent text-ink-inverse hover:bg-relic-300 hover:shadow-glow-accent active:bg-relic-500',
 };
 

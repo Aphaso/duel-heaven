@@ -22,6 +22,23 @@ export function ErrorMessage({ children, className }: { children: ReactNode; cla
     );
 }
 
+/** Banner for warnings and information that do not block the user. */
+export function Notice({ tone = 'warning', title, children, className }: { tone?: 'warning' | 'info'; title?: ReactNode; children?: ReactNode; className?: string }) {
+    return (
+        <div
+            role='status'
+            className={cn(
+                'rounded-control border px-3 py-2 text-sm',
+                tone === 'warning' ? 'border-warning/40 bg-warning/10 text-warning' : 'border-aether-800 bg-aether-950/60 text-aether-200',
+                className,
+            )}
+        >
+            {title && <p className='font-semibold'>{title}</p>}
+            {children && <div className={title ? 'mt-1 text-ink-muted' : undefined}>{children}</div>}
+        </div>
+    );
+}
+
 interface EmptyProps {
     title: ReactNode;
     description?: ReactNode;

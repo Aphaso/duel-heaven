@@ -128,6 +128,45 @@ export const ChevronDownIcon = (p: IconProps) => (
     </Icon>
 );
 
+export const SwapIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <path d='M4 8h13l-3.5-3.5M20 16H7l3.5 3.5' />
+    </Icon>
+);
+
+export const PrinterIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <path d='M7 9V3.5h10V9' />
+        <rect x='3.5' y='9' width='17' height='8' rx='2' />
+        <path d='M7 14.5h10v6H7z' />
+    </Icon>
+);
+
+export const PencilIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <path d='M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z' />
+        <path d='m13.5 6.5 4 4' />
+    </Icon>
+);
+
+export const PlusIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <path d='M12 5v14M5 12h14' />
+    </Icon>
+);
+
+export const TrashIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <path d='M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3' />
+    </Icon>
+);
+
+export const DownloadIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <path d='M12 4v11M7 10.5l5 5 5-5M5 20h14' />
+    </Icon>
+);
+
 export const SearchIcon = (p: IconProps) => (
     <Icon {...p}>
         <circle cx='11' cy='11' r='6.5' />

@@ -1,17 +1,18 @@
 import { lanesOf, totalCopies } from '../sidePatternLanes';
 import type { SidePattern, SidePatternCard } from '../types';
 import CardTile from './CardTile';
+import { Notice } from '../ui/States';
 
 const LANE_TITLE = { MAIN: 'Main Deck', EXTRA: 'Extra Deck' } as const;
 
 /** One image per copy, grouped by card, same as the decklist */
 function CardGroups({ entries }: { entries: SidePatternCard[] }) {
     return (
-        <div className='flex flex-wrap gap-3'>
+        <div className='flex flex-wrap gap-x-3 gap-y-2'>
             {entries.map((entry) => (
-                <div key={entry.id} className='flex gap-1 rounded bg-gray-50 p-1.5'>
+                <div key={entry.id} className='flex' title={`${entry.quantity}× ${entry.card.name}`}>
                     {Array.from({ length: entry.quantity }, (_, i) => (
-                        <div key={i} className='w-16 sm:w-20'>
+                        <div key={i} className={i > 0 ? '-ml-8 w-card-sm' : 'w-card-sm'}>
                             <CardTile card={entry.card}></CardTile>
                         </div>
                     ))}
@@ -25,42 +26,41 @@ export default function SidePatternView({ pattern }: { pattern : SidePattern }) 
     const lanes = lanesOf(pattern);
 
     return (
-        <div>
+        <div className='space-y-5'>
             {pattern.issues.length > 0 && (
-                <div className='rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800'>
-                    <p className='font-medium'>
-                        This Side Pattern no longer matches the saved Decklist:
-                    </p>
-                    <ul className='mt-1 list-disc pl-5'>
+                <Notice title='This Side Pattern no longer matches the saved Decklist:'>
+                    <ul className='list-disc space-y-0.5 pl-5'>
                         {pattern.issues.map((issue) => (
                             <li key={issue}>{issue}</li>
                         ))}
                     </ul>
-                </div>
+                </Notice>
             )}
 
-            {pattern.notes && <p className='mt-3 whitespace-pre-line text-gray-700'>{pattern.notes}</p>}
+            {pattern.notes && (
+                <p className='rounded-control border-l-2 border-line-strong bg-surface-sunken px-4 py-3 text-sm whitespace-pre-line text-ink-muted'>{pattern.notes}</p>
+            )}
 
-            {lanes.length === 0 && <p className='mt-4 text-sm text-gray-500'>No Cards in this Side Pattern.</p>}
+            {lanes.length === 0 && <p className='text-sm text-ink-subtle'>No Cards in this Side Pattern.</p>}
 
             {lanes.map(({ lane, cardsOut, cardsIn }) => (
-                <section key={lane} className='mt-6'>
-                    <h3 className='text-lg font-semibold'>
+                <section key={lane} className='space-y-3'>
+                    <h3 className='flex items-baseline gap-3 font-display text-heading text-ink'>
                         {LANE_TITLE[lane]}
-                        <span className='ml-2 text-sm font-normal text-gray-500'>
+                        <span className='numeric text-caption text-ink-subtle'>
                             {totalCopies(cardsOut)} out · {totalCopies(cardsIn)} in
                         </span>
                     </h3>
-                    <div className='mt-2 grid gap-4 md:grid-cols-2'>
-                        <div>
-                            <p className='mb-1 text-xs font-medium uppercase tracking-wide text-red-700'>
-                                Out
+                    <div className='grid gap-3 md:grid-cols-2'>
+                        <div className='rounded-control border border-danger/25 bg-danger/5 p-3'>
+                            <p className='label mb-2 flex items-center gap-1.5 text-danger'>
+                                <span aria-hidden='true'>−</span> Out
                             </p>
                             <CardGroups entries={cardsOut}></CardGroups>
                         </div>
-                        <div>
-                            <p className='mb-1 text-xs font-medium uppercase tracking-wide text-green-700'>
-                                In
+                        <div className='rounded-control border border-success/25 bg-success/5 p-3'>
+                            <p className='label mb-2 flex items-center gap-1.5 text-success'>
+                                <span aria-hidden='true'>+</span> In
                             </p>
                             <CardGroups entries={cardsIn}></CardGroups>
                         </div>

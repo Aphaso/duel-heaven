@@ -3,6 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { createDeck, deleteDeck, listDecks } from '../api';
 import { useConfirm } from '../confirm/useConfirm';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Field';
+import { DeckIcon } from '../ui/icons';
+import { Page, PageHeader } from '../ui/PageHeader';
+import { Panel } from '../ui/Panel';
+import { EmptyState, ErrorMessage, LoadingState } from '../ui/States';
 
 export default function DecksPage() {
     const queryClient = useQueryClient();
@@ -47,52 +54,58 @@ export default function DecksPage() {
     }
 
     return (
-        <main className='mx-auto max-w-3xl p-8'>
-            <h1 className='text-3xl font-bold'>My Decks</h1>
+        <Page>
+            <PageHeader eyebrow='Deckbuilder' title='My Decks' description='Your decklists, Side Patterns and proxies, all in one place.'></PageHeader>
 
-            <form onSubmit={handleSubmit} className='mt-6 flex flex-wrap gap-2'>
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder='Name of the Deck' className='min-w-48 flex-1 rounded border border-gray-300 px-3 py-2'></input>
-                <input value={archetype} onChange={(e) => setArchetype(e.target.value)} placeholder='Archetype (optional)' className='min-w-48 flex-1 rounded border border-gray-300 px-3 py-2'></input>
-                <button type='submit' disabled={!name.trim() || create.isPending} className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40'>
-                    {create.isPending ? 'Creating...' : 'Create Deck'}
-                </button>
-            </form>
-            {create.isError && (
-                <p className='mt-2 whitespace-pre-line text-red-600'>
-                    {create.error.message}
-                </p>
-            )}
+            <Panel title='New Deck'>
+                <form onSubmit={handleSubmit} className='flex flex-col gap-3 sm:flex-row'>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder='Name of the Deck' aria-label='Name of the Deck' className='sm:flex-[2]'></Input>
+                    <Input value={archetype} onChange={(e) => setArchetype(e.target.value)} placeholder='Archetype (optional)' aria-label='Archetype (optional)' className='sm:flex-[1.5]'></Input>
+                    <Button type='submit' variant='primary' disabled={!name.trim()} loading={create.isPending}>
+                        {create.isPending ? 'Creating...' : 'Create Deck'}
+                    </Button>
+                </form>
+                {create.isError && <ErrorMessage className='mt-3'>{create.error.message}</ErrorMessage>}
+            </Panel>
 
-            {decks.isPending && <p className='mt-6 text-gray-500'>Loading...</p>}
-            {decks.isError && (
-                <p className='mt-6 text-red-600'>{decks.error.message}</p>
-            )}
-            {remove.isError && (
-                <p className='mt-6 whitespace-pre-line text-red-600'>{remove.error.message}</p>
-            )}
+            {decks.isPending && <LoadingState></LoadingState>}
+            {decks.isError && <ErrorMessage>{decks.error.message}</ErrorMessage>}
+            {remove.isError && <ErrorMessage>{remove.error.message}</ErrorMessage>}
 
             {decks.data && decks.data.length === 0 && (
-                <p className='mt-6 text-gray-600'>No Deck present</p>
+                <EmptyState icon={<DeckIcon />} title='No Deck present' description='Give your first Deck a name above to start building it.'></EmptyState>
             )}
 
             {decks.data && decks.data.length > 0 && (
-                <ul className='mt-6 divide-y rounded border border-gray-200'>
-                    {decks.data.map((deck) => (
-                        <li key={deck.id} className='flex items-center justify-between gap-4 p-4'>
-                            <Link to={`/decks/${deck.id}`} className='min-w-0 flex-1'>
-                                <span className='block truncate font-medium hover:underline'>{deck.name}</span>
-                                <span className='block text-sm text-gray-500'>
-                                    {deck.archetype ?? 'No specified Archetype'} · updated on {' '}
-                                    {new Date(deck.updatedAt).toLocaleDateString('it-IT')}
-                                </span>
-                            </Link>
-                            <button onClick={() => void handleDelete(deck.id, deck.name)} disabled={remove.isPending} className='rounded border border-red-300 px-3 py-1 text-sm text-red-700 hover:bg-red-50 disabled:opacity-40'>
-                                Delete
-                            </button>
-                        </li>
-                    ))}
-                </ul>
+                <section aria-label='Decks' className='space-y-3'>
+                    <p className='label text-ink-subtle'>
+                        {decks.data.length} {decks.data.length === 1 ? 'Deck' : 'Decks'}
+                    </p>
+                    <ul className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+                        {decks.data.map((deck) => (
+                            <li key={deck.id} className='group relative flex flex-col rounded-panel border border-line bg-surface-raised shadow-panel transition-colors hover:border-aether-800'>
+                                <Link to={`/decks/${deck.id}`} className='focus-ring flex flex-1 items-start gap-4 rounded-panel p-panel'>
+                                    <span aria-hidden='true' className='grid aspect-card w-10 shrink-0 place-items-center rounded-card border border-aether-800 bg-gradient-to-br from-aether-950 to-arcane-950 text-primary'>
+                                        <DeckIcon className='size-4' />
+                                    </span>
+                                    <span className='min-w-0 flex-1 space-y-1.5'>
+                                        <span className='block truncate font-display text-heading text-ink group-hover:text-primary'>{deck.name}</span>
+                                        {deck.archetype ? <Badge tone='secondary'>{deck.archetype}</Badge> : <span className='block text-caption text-ink-faint'>No specified Archetype</span>}
+                                    </span>
+                                </Link>
+                                <div className='flex items-center justify-between gap-2 border-t border-line px-panel py-2'>
+                                    <span className='text-caption text-ink-subtle'>
+                                        Updated on {new Date(deck.updatedAt).toLocaleDateString('it-IT')}
+                                    </span>
+                                    <Button size='sm' variant='danger-ghost' onClick={() => void handleDelete(deck.id, deck.name)} disabled={remove.isPending}>
+                                        Delete
+                                    </Button>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
             )}
-        </main>
+        </Page>
     );
 }

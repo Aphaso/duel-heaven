@@ -36,7 +36,7 @@ export default function CardBlock({
     return (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={entries.map(entryKey)} strategy={rectSortingStrategy}>
-                <div className='flex flex-wrap gap-3'>
+                <div className='flex flex-wrap gap-x-4 gap-y-3'>
                     {entries.map((entry) => (
                         <SortableCardGroup key={entryKey(entry)} entry={entry} busy={busy} canAddCopy={canAddCopy(entry.card)} onChange={onChange}>
                         </SortableCardGroup>

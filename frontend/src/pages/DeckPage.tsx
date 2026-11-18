@@ -8,13 +8,17 @@ import DeckEditor from '../components/DeckEditor';
 import SidePatternsPanel from '../components/SidePatternsPanel';
 import { useConfirm } from '../confirm/useConfirm';
 import ProxiesPanel from '../components/ProxiesPanel';
+import { ChevronLeftIcon, DeckIcon, PrinterIcon, SwapIcon } from '../ui/icons';
+import { Page } from '../ui/PageHeader';
+import { ErrorMessage, LoadingState } from '../ui/States';
+import { Tabs, type TabItem } from '../ui/Tabs';
 
 type Tab = 'decklist' | 'side-patterns' | 'proxies';
 
-const TABS: { id: Tab; label: string }[] = [
-    { id: 'decklist', label: 'Decklist' },
-    { id: 'side-patterns', label: 'Side Patterns' },
-    { id: 'proxies', label: 'Proxies'},
+const TABS: { id: Tab; label: string; icon: TabItem<Tab>['icon'] }[] = [
+    { id: 'decklist', label: 'Decklist', icon: DeckIcon },
+    { id: 'side-patterns', label: 'Side Patterns', icon: SwapIcon },
+    { id: 'proxies', label: 'Proxies', icon: PrinterIcon },
 ];
 
 export default function DeckPage() {
@@ -55,37 +59,28 @@ export default function DeckPage() {
     });
 
     return (
-        <main className='mx-auto max-w-7xl p-8'>
-            <Link to='/decks' className='text-sm text-blue-700 hover:underline'>
-                ← All Decks
+        <Page className='space-y-6'>
+            <Link to='/decks' className='focus-ring inline-flex items-center gap-1 rounded-control text-sm text-ink-subtle hover:text-primary'>
+                <ChevronLeftIcon className='size-4' />
+                All Decks
             </Link>
 
-            {deck.isPending && <p className='mt-4 text-gray-500'>Loading...</p>}
-            {deck.isError && <p className='mt-4 text-red-600'>{deck.error.message}</p>}
+            {deck.isPending && <LoadingState></LoadingState>}
+            {deck.isError && <ErrorMessage>{deck.error.message}</ErrorMessage>}
 
             {deck.data && (
                 <>
-                    <div className='mt-2'>
-                        <DeckDetailsForm deck={deck.data}></DeckDetailsForm>
-                    </div>
+                    <DeckDetailsForm deck={deck.data}></DeckDetailsForm>
 
-                    <div role='tablist' className='mt-4 flex gap-1 border-b border-gray-200'>
-                        {TABS.map((t) => (
-                            <button
-                                key={t.id}
-                                role='tab'
-                                aria-selected={tab === t.id}
-                                onClick={() => void selectTab(t.id)}
-                                className={`-mb-px border-b-2 px-4 py-2 text-sm ${
-                                    tab === t.id
-                                        ? 'border-blue-600 font-semibold text-blue-700'
-                                        : 'border-transparent text-gray-600 hover:text-gray-900'
-                                }`}
-                            >
-                                {t.label}
-                            </button>
-                        ))}
-                    </div>
+                    <Tabs
+                        label='Deck sections'
+                        tabs={TABS.map((t) => ({
+                            ...t,
+                            dot: (t.id === 'decklist' && listDirty) || (t.id === 'side-patterns' && patternDirty),
+                        }))}
+                        value={tab}
+                        onChange={(next) => void selectTab(next)}
+                    ></Tabs>
 
                     {/* The editor stays mounted but hidden: unmounting it would throw away the unsaved draft */}
                     <div role='tabpanel' className={tab === 'decklist' ? '' : 'hidden'}>
@@ -103,6 +98,6 @@ export default function DeckPage() {
                     </div>
                 </>
             )}
-        </main>
+        </Page>
     );
 }
