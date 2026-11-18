@@ -7,12 +7,14 @@ import DeckDetailsForm from '../components/DeckDetailsForm';
 import DeckEditor from '../components/DeckEditor';
 import SidePatternsPanel from '../components/SidePatternsPanel';
 import { useConfirm } from '../confirm/useConfirm';
+import ProxiesPanel from '../components/ProxiesPanel';
 
-type Tab = 'decklist' | 'side-patterns';
+type Tab = 'decklist' | 'side-patterns' | 'proxies';
 
 const TABS: { id: Tab; label: string }[] = [
     { id: 'decklist', label: 'Decklist' },
     { id: 'side-patterns', label: 'Side Patterns' },
+    { id: 'proxies', label: 'Proxies'},
 ];
 
 export default function DeckPage() {
@@ -95,6 +97,10 @@ export default function DeckPage() {
                             <SidePatternsPanel key={deck.data.id} deck={deck.data} decklistDirty={listDirty} onDirtyChange={setPatternDirty}></SidePatternsPanel>
                         </div>
                     )}
+                    {/* Always mounted but hidden: the choice of the Cards survives a change of tab */}
+                    <div role='tabpanel' className={tab === 'proxies' ? '' : 'hidden'}>
+                        <ProxiesPanel key={deck.data.id} deck={deck.data} decklistDirty={listDirty}></ProxiesPanel>
+                    </div>
                 </>
             )}
         </main>
