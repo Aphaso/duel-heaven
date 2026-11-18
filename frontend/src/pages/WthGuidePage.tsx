@@ -7,6 +7,10 @@ import WthGuideView from '../components/WthGuideView';
 import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
 import { draftFromGuide, emptyWthDraft, toWthPayload, type WthDraft } from '../wthDraft';
 import { useConfirm } from '../confirm/useConfirm';
+import { Button } from '../ui/Button';
+import { ChevronLeftIcon, PencilIcon, TrashIcon } from '../ui/icons';
+import { Page, PageHeader } from '../ui/PageHeader';
+import { ErrorMessage, LoadingState } from '../ui/States';
 
 export default function WthGuidePage() {
     const { id } = useParams<{ id: string }>();
@@ -70,65 +74,58 @@ function WthGuideScreen({ id }: { id: string | undefined }) {
     const isEditing = !id || editing;
 
     return (
-        <main className='mx-auto max-w-5xl p-8'>
-            <Link to='/wth' className='text-sm text-blue-700 hover:underline'>
-                ← All Guides
+        <Page className='space-y-6'>
+            <Link to='/wth' className='focus-ring inline-flex items-center gap-1 rounded-control text-sm text-ink-subtle hover:text-primary'>
+                <ChevronLeftIcon className='size-4' />
+                All Guides
             </Link>
 
-            {id && guideQuery.isPending && <p className='mt-4 text-gray-500'>Loading...</p>}
-            {id && guideQuery.isError && <p className='mt-4 text-red-600'>{guideQuery.error.message}</p>}
+            {id && guideQuery.isPending && <LoadingState></LoadingState>}
+            {id && guideQuery.isError && <ErrorMessage>{guideQuery.error.message}</ErrorMessage>}
 
             {(!id || guide) && (
                 <>
-                    <div className='mt-2 flex items-center justify-between'>
-                        <h1 className='text-2xl font-bold'>
-                            {guide ? guide.opponentDeckName : 'New Guide'}
-                        </h1>
-                        {guide && !isEditing && (
-                            <div className='flex gap-2'>
-                                <button
-                                    type='button'
-                                    onClick={() => setEditing(true)}
-                                    className='rounded border px-3 py-1'
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    type='button'
-                                    disabled={remove.isPending}
-                                    onClick={() => void askDelete(guide.opponentDeckName)}
-                                    className='rounded border border-red-600 px-3 py-1 text-red-700 disabled:opacity-40'
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                    {remove.isError && <p className='mt-2 text-red-600'>{remove.error.message}</p>}
+                    <PageHeader
+                        eyebrow={guide ? (isEditing ? 'Edit Guide' : 'Where to Handtrap vs') : 'Where to Handtrap?'}
+                        title={guide ? guide.opponentDeckName : 'New Guide'}
+                        actions={
+                            guide && !isEditing && (
+                                <>
+                                    <Button size='sm' variant='danger-ghost' disabled={remove.isPending} onClick={() => void askDelete(guide.opponentDeckName)}>
+                                        <TrashIcon className='size-4' />
+                                        Delete
+                                    </Button>
+                                    <Button size='sm' variant='primary' onClick={() => setEditing(true)}>
+                                        <PencilIcon className='size-4' />
+                                        Edit
+                                    </Button>
+                                </>
+                            )
+                        }
+                    ></PageHeader>
+                    {remove.isError && <ErrorMessage>{remove.error.message}</ErrorMessage>}
 
-                    <div className='mt-4'>
-                        {isEditing ? (
-                            <WthGuideEditor
-                                initial={guide ? draftFromGuide(guide) : emptyWthDraft()}
-                                saving={save.isPending}
-                                error={save.isError ? save.error.message : null}
-                                onSave={(draft) => save.mutate(draft)}
-                                onCancel={
-                                    guide
-                                        ? () => {
-                                              save.reset();
-                                              setEditing(false);
-                                          }
-                                        : undefined
-                                }
-                                onDirtyChange={setDirty}
-                            />
-                        ) : (
-                            guide && <WthGuideView guide={guide} />
-                        )}
-                    </div>
+                    {isEditing ? (
+                        <WthGuideEditor
+                            initial={guide ? draftFromGuide(guide) : emptyWthDraft()}
+                            saving={save.isPending}
+                            error={save.isError ? save.error.message : null}
+                            onSave={(draft) => save.mutate(draft)}
+                            onCancel={
+                                guide
+                                    ? () => {
+                                          save.reset();
+                                          setEditing(false);
+                                      }
+                                    : undefined
+                            }
+                            onDirtyChange={setDirty}
+                        />
+                    ) : (
+                        guide && <WthGuideView guide={guide} />
+                    )}
                 </>
             )}
-        </main>
+        </Page>
     );
 }

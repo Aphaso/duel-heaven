@@ -1,34 +1,37 @@
-import { cardImageUrl } from '../api';
-import type { Card, WthGuide } from '../types';
-
-function CardFigure({ card, width }: { card: Card; width: string }) {
-    return (
-        <figure className={width}>
-            <img src={cardImageUrl(card.id)} alt={card.name} draggable={false} className='w-full'></img>
-            <figcaption className='truncate text-center text-xs' title={card.name}>
-                {card.name}
-            </figcaption>
-        </figure>
-    );
-}
+import type { WthGuide } from '../types';
+import CardTile from './CardTile';
+import { WthMatchup } from './WthMatchup';
+import { ShieldIcon } from '../ui/icons';
+import { EmptyState } from '../ui/States';
 
 export default function WthGuideView({ guide }: { guide: WthGuide }) {
     return (
         <div className='space-y-4'>
-            {guide.notes && <p className='text-gray-700'>{guide.notes}</p>}
-            {guide.entries.map((entry) => (
-                <section key={entry.id} className='rounded border p-3'>
-                    <div className='flex flex-wrap items-center gap-4'>
-                        <CardFigure card={entry.targetCard} width='w-28'></CardFigure>
-                        <span aria-hidden className='text-3xl text-gray-400'>→</span>
-                        <div className='flex flex-wrap gap-3'>
+            {guide.notes && (
+                <p className='rounded-control border-l-2 border-primary bg-aether-950/40 px-4 py-3 text-sm whitespace-pre-line text-ink-muted'>{guide.notes}</p>
+            )}
+            {guide.entries.length === 0 && (
+                <EmptyState icon={<ShieldIcon />} title='No Opponent Cards yet' description='Edit the guide to add the cards to stop.'></EmptyState>
+            )}
+            {guide.entries.map((entry, i) => (
+                <WthMatchup
+                    key={entry.id}
+                    index={i + 1}
+                    target={entry.targetCard}
+                    responses={
+                        <ul className='flex flex-wrap gap-3'>
                             {entry.responses.map((r) => (
-                                <CardFigure key={r.id} card={r.card} width='w-24'></CardFigure>
+                                <li key={r.id} className='w-card-md'>
+                                    <CardTile card={r.card}></CardTile>
+                                    <p className='mt-1 truncate text-center text-micro text-ink-muted' title={r.card.name}>
+                                        {r.card.name}
+                                    </p>
+                                </li>
                             ))}
-                        </div>
-                    </div>
-                    {entry.notes && <p className='mt-2 text-sm text-gray-600'>{entry.notes}</p>}
-                </section>
+                        </ul>
+                    }
+                    footer={entry.notes ? <p className='text-sm whitespace-pre-line text-ink-muted'>{entry.notes}</p> : undefined}
+                ></WthMatchup>
             ))}
         </div>
     );
