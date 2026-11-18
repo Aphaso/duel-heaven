@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { saveDeckList } from '../api';
 import { blocksOf, isSameList, moveEntry, normalize, toDraft, withQuantity, type DraftEntry } from '../draft';
@@ -7,7 +7,8 @@ import CardSearchPanel from './CardSearchPanel';
 import DeckSectionView from './DeckSectionView';
 import ZoneMeter from './ZoneMeter';
 import { Button } from '../ui/Button';
-import { CheckIcon } from '../ui/icons';
+import { CheckIcon, PlusIcon } from '../ui/icons';
+import { cn } from '../ui/styles';
 import { ErrorMessage, Notice } from '../ui/States';
 
 const SECTIONS: { section: DeckSection; title: string }[] = [
@@ -94,13 +95,44 @@ export default function DeckEditor({ deck, onDirtyChange }: Props) {
 
     const mainIncomplete = counts.MAIN < limits.mainMin;
 
+    // Mobile only: the search panel opens as a sheet from the bottom of the screen
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const sheetRef = useRef<HTMLElement>(null);
+
+    useEffect(() => {
+        if (!sheetOpen) {
+            return;
+        }
+        // The page behind does not scroll while the sheet is open (only below lg, where it is a sheet)
+        const mobile = window.matchMedia('(max-width: 63.999rem)').matches;
+        const previous = document.body.style.overflow;
+        if (mobile) {
+            document.body.style.overflow = 'hidden';
+            sheetRef.current?.querySelector('input')?.focus();
+        }
+        function onKey(e: KeyboardEvent) {
+            if (e.key === 'Escape') {
+                setSheetOpen(false);
+            }
+        }
+        document.addEventListener('keydown', onKey);
+        return () => {
+            document.body.style.overflow = previous;
+            document.removeEventListener('keydown', onKey);
+        };
+    }, [sheetOpen]);
+
     return (
         <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_var(--spacing-sidebar)]'>
             <div className='min-w-0 space-y-4'>
                 {/* Toolbar stuck under the top bar: save state and counters of the three zones */}
                 <div className='sticky top-topbar z-20 -mx-gutter border-y border-line bg-surface-base/85 px-gutter py-3 backdrop-blur-md sm:mx-0 sm:rounded-panel sm:border sm:px-4'>
                     <div className='flex flex-wrap items-center gap-x-6 gap-y-3'>
-                        <div className='flex items-center gap-2'>
+                        <div className='flex flex-wrap items-center gap-2'>
+                            <Button variant='secondary' size='sm' onClick={() => setSheetOpen(true)} className='lg:hidden' aria-haspopup='dialog'>
+                                <PlusIcon className='size-4' />
+                                Add Cards
+                            </Button>
                             <Button variant='primary' size='sm' onClick={() => save.mutate()} disabled={!dirty} loading={save.isPending}>
                                 {save.isPending ? 'Saving...' : 'Save'}
                             </Button>
@@ -161,8 +193,54 @@ export default function DeckEditor({ deck, onDirtyChange }: Props) {
                 ))}
             </div>
 
-            <aside className='lg:sticky lg:top-[calc(var(--spacing-topbar)+1rem)] lg:max-h-[calc(100dvh-var(--spacing-topbar)-2rem)] lg:self-start'>
-                <CardSearchPanel copiesByCard={copiesByCard} busy={save.isPending} canAdd={canAdd} onAdd={addCard}>
+            {/* Mobile: dark layer behind the sheet, a tap closes it */}
+            {sheetOpen && (
+                <div aria-hidden='true' onClick={() => setSheetOpen(false)} className='fixed inset-0 z-[55] animate-fade-in bg-night-950/70 backdrop-blur-sm lg:hidden'></div>
+            )}
+
+            {/*
+              The same panel in two layouts, so the search survives open/close:
+              desktop = sticky side column; mobile = sheet from the bottom, hidden until opened.
+            */}
+            <aside
+                ref={sheetRef}
+                aria-label='Add Cards'
+                className={cn(
+                    'lg:sticky lg:top-[calc(var(--spacing-topbar)+1rem)] lg:max-h-[calc(100dvh-var(--spacing-topbar)-2rem)] lg:self-start',
+                    'max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-[60] max-lg:flex max-lg:h-[85dvh] max-lg:animate-rise-in max-lg:flex-col',
+                    'max-lg:rounded-t-panel max-lg:border-t max-lg:border-line-strong max-lg:bg-surface-raised max-lg:pb-[env(safe-area-inset-bottom)] max-lg:shadow-overlay',
+                    !sheetOpen && 'max-lg:hidden',
+                )}
+            >
+                {/* Mobile only: handle and live counters, to see what the deck looks like while adding */}
+                <div className='shrink-0 space-y-3 px-4 pt-2 pb-3 lg:hidden'>
+                    <div aria-hidden='true' className='mx-auto h-1 w-10 rounded-full bg-line-strong'></div>
+                    <div className='flex gap-4'>
+                        {SECTIONS.map(({ section, title }) => (
+                            <ZoneMeter
+                                key={section}
+                                section={section}
+                                label={title.replace(' Deck', '')}
+                                count={counts[section]}
+                                max={maxOf[section]}
+                                min={section === 'MAIN' ? limits.mainMin : undefined}
+                                className='min-w-0 flex-1'
+                            ></ZoneMeter>
+                        ))}
+                    </div>
+                </div>
+                <CardSearchPanel
+                    copiesByCard={copiesByCard}
+                    busy={save.isPending}
+                    canAdd={canAdd}
+                    onAdd={addCard}
+                    className='max-lg:min-h-0 max-lg:flex-1 max-lg:rounded-none max-lg:border-x-0 max-lg:border-b-0 max-lg:shadow-none'
+                    actions={
+                        <Button size='sm' variant='primary' onClick={() => setSheetOpen(false)} className='lg:hidden'>
+                            Done
+                        </Button>
+                    }
+                >
                 </CardSearchPanel>
             </aside>
         </div>

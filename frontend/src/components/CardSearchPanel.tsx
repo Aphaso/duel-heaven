@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { searchCards } from '../api';
 import { allowedSections } from '../deckRules';
@@ -27,6 +27,10 @@ interface Props {
     busy: boolean;
     canAdd: (card: Card, section: DeckSection) => boolean;
     onAdd: (card: Card, section: DeckSection) => void;
+    /** Extra classes for the panel (e.g. when it is shown as a bottom sheet). */
+    className?: string;
+    /** Content on the right of the panel title (e.g. a close button). */
+    actions?: ReactNode;
 }
 
 export default function CardSearchPanel({
@@ -34,6 +38,8 @@ export default function CardSearchPanel({
     busy,
     canAdd,
     onAdd,
+    className,
+    actions,
 }: Props) {
     const [text, setText] = useState('');
     const search = useDebounce(text.trim(), 300);
@@ -51,7 +57,7 @@ export default function CardSearchPanel({
     const results = search.length >= 2 ? data : undefined;
 
     return (
-        <Panel title='Add Cards' flush className='flex max-h-[inherit] flex-col overflow-hidden' bodyClassName='flex min-h-0 flex-1 flex-col'>
+        <Panel title='Add Cards' actions={actions} flush className={cn('flex max-h-[inherit] flex-col overflow-hidden', className)} bodyClassName='flex min-h-0 flex-1 flex-col'>
             <div className='space-y-2 border-b border-line p-4'>
                 <SearchInput value={text} onValueChange={setText} loading={isLoading || (search.length >= 2 && isPlaceholderData)} placeholder='Card Name...' aria-label='Card Name'></SearchInput>
                 {search.length < 2 ? (
