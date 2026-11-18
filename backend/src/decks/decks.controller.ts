@@ -1,15 +1,20 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, StreamableFile, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUserId } from '../auth/current-user.decorator';
 import { DecksService } from './decks.service';
+import { ProxiesService } from './proxies.service';
 import { CreateDeckDto } from './create-deck.dto';
 import { UpdateDeckDto } from './update-deck.dto';
 import { SaveDeckListDto } from './save-deck-list.dto';
+import { CreateProxiesDto } from './create-proxies.dto';
 
 @Controller('decks')
 @UseGuards(AuthGuard)
 export class DecksController {
-    constructor(private readonly decksService: DecksService) {}
+    constructor(
+        private readonly decksService: DecksService,
+        private readonly proxyPdf: ProxiesService,
+    ) {}
 
     @Get()
     findAll(@CurrentUserId() userId: string) {
@@ -40,5 +45,12 @@ export class DecksController {
     @Put(':id/list')
     saveList(@CurrentUserId() userId: string, @Param('id') id: string, @Body() dto: SaveDeckListDto) {
         return this.decksService.saveList(userId, id, dto);
+    }
+
+    @Post(':id/proxies')
+    @HttpCode(HttpStatus.OK)
+    async proxies(@CurrentUserId() userId: string, @Param('id') id: string, @Body() dto: CreateProxiesDto) {
+        const pdf = await this.proxyPdf.build(userId, id, dto.cards);
+        return new StreamableFile(pdf, { type: 'application/pdf', disposition: 'attachment; filename="proxies.pdf"' });
     }
 }

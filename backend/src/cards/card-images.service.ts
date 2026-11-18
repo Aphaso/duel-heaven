@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, StreamableFile } from '@nestjs/common';
 import { createReadStream, existsSync } from 'node:fs';
-import { mkdir, readdir, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, rename, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -41,6 +41,18 @@ export class CardImagesService {
             throw new NotFoundException(`Immagine della carta ${cardId} non disponibile`);
         }
         return new StreamableFile(createReadStream(path), { type: 'image/jpeg' });
+    }
+
+    /** The bytes of the image, or null if it has not been downloaded yet */
+    async read(cardId: number): Promise<Buffer | null> {
+        try {
+            return await readFile(this.filePath(cardId));
+        } catch (err) {
+            if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+                return null;
+            }
+            throw err;
+        }
     }
 
     private filePath(cardId: number) {
