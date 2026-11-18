@@ -128,6 +128,19 @@ export const ChevronDownIcon = (p: IconProps) => (
     </Icon>
 );
 
+export const SearchIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <circle cx='11' cy='11' r='6.5' />
+        <path d='m20 20-4.2-4.2' />
+    </Icon>
+);
+
+export const StarIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <path d='m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9L12 3.5Z' />
+    </Icon>
+);
+
 export const EyeIcon = (p: IconProps) => (
     <Icon {...p}>
         <path d='M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z' />

@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { searchCards } from '../api';
 import CardTile from '../components/CardTile';
+import CardDetailDialog from '../components/CardDetailDialog';
 import { useDebounce } from '../hooks/useDebounce';
 import Pagination from '../components/Pagination';
+import type { Card } from '../types';
+import { CardsIcon } from '../ui/icons';
+import { Page, PageHeader } from '../ui/PageHeader';
+import { SearchInput } from '../ui/SearchInput';
+import { EmptyState, ErrorMessage } from '../ui/States';
+import { cn } from '../ui/styles';
 
 const PAGE_SIZE = 24;
+
+const GRID = 'grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 lg:grid-cols-6';
 
 export default function CardSearchPage() {
     const [text, setText] = useState('');
@@ -13,6 +22,10 @@ export default function CardSearchPage() {
 
     const [pageState, setPageState] = useState({ search: '', page: 1});
     const page = pageState.search === search ? pageState.page : 1;
+
+    // Card shown in the detail window
+    const [selected, setSelected] = useState<Card | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     function goToPage(next: number) {
         setPageState({ search, page: next });
@@ -25,34 +38,101 @@ export default function CardSearchPage() {
         placeholderData: keepPreviousData,
     });
 
+    // "/" moves the focus to the search field, unless the user is already typing somewhere
+    useEffect(() => {
+        function onKey(e: KeyboardEvent) {
+            const target = e.target as HTMLElement;
+            const typing = target.closest('input, textarea, select, [contenteditable="true"]');
+            if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey) {
+                e.preventDefault();
+                inputRef.current?.focus();
+            }
+        }
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, []);
+
+    // Typing or loading a new page: results on screen are not the final ones yet
+    const updating = text.trim() !== search || isPlaceholderData;
+
     return (
-        <main className='mx-auto max-w-6xl p-8'>
-            <h1 className='text-3xl font-bold'>Search Cards</h1>
+        <Page>
+            <div className='space-y-6'>
+                <PageHeader eyebrow='Card Database' title='Search Cards' description='Find any card by name and open it to read its full text and stats.'></PageHeader>
+                <SearchInput
+                    ref={inputRef}
+                    size='lg'
+                    value={text}
+                    onValueChange={setText}
+                    loading={updating}
+                    shortcut='/'
+                    placeholder='Card name...'
+                    aria-label='Card name'
+                    autoFocus
+                ></SearchInput>
+            </div>
 
-            <input type='search' value={text} onChange={(e) => setText(e.target.value)} placeholder='Card name...' className='mt-4 full rounded border border-gray-300 px-3 py-2'></input>
+            {isError && <ErrorMessage>{error.message}</ErrorMessage>}
 
-            {isPending && <p className='mt-4 text-gray-500'>Loading...</p>}
-            {isError && <p className='mt-4 text-red-600'>{error.message}</p>}
+            {isPending && (
+                <div className={GRID} aria-hidden='true'>
+                    {Array.from({ length: 12 }, (_, i) => (
+                        <div key={i} className='space-y-2'>
+                            <div className='skeleton aspect-card rounded-card'></div>
+                            <div className='skeleton h-3 w-3/4 rounded'></div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {data && (
-                <>
-                    <p className='mt-4 text-sm text-gray-500'>
-                        {data.total} found cards
-                    </p>
+                <section aria-label='Results' className='space-y-4'>
+                    <div className='flex items-baseline justify-between gap-4 border-b border-line pb-3'>
+                        <p className='text-sm text-ink-subtle'>
+                            <span className='numeric font-semibold text-ink'>{data.total.toLocaleString('it-IT')}</span> found cards
+                            {search && (
+                                <>
+                                    {' '}for <span className='text-ink'>“{search}”</span>
+                                </>
+                            )}
+                        </p>
+                        {data.totalPages > 1 && (
+                            <p className='numeric text-caption text-ink-faint'>
+                                {page} / {data.totalPages}
+                            </p>
+                        )}
+                    </div>
 
                     {data.items.length === 0 ? (
-                        <p className='mt-4'>No card found.</p>
+                        <EmptyState
+                            icon={<CardsIcon />}
+                            title='No card found.'
+                            description='Check the spelling or try with a part of the name.'
+                        ></EmptyState>
                     ) : (
-                        <div className={`mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 ${isPlaceholderData ? 'opacity-50' : ''}`}>
+                        <ul className={cn(GRID, 'transition-opacity', isPlaceholderData && 'opacity-50')}>
                             {data.items.map((card) => (
-                                <CardTile key={card.id} card={card}></CardTile>
+                                <li key={card.id}>
+                                    <button
+                                        type='button'
+                                        onClick={() => setSelected(card)}
+                                        className='focus-ring group block w-full rounded-card text-left'
+                                    >
+                                        <div className='transition-[transform,box-shadow] duration-200 group-hover:-translate-y-1 group-hover:shadow-glow-primary rounded-card'>
+                                            <CardTile card={card}></CardTile>
+                                        </div>
+                                        <p className='mt-2 truncate text-caption text-ink-muted group-hover:text-ink'>{card.name}</p>
+                                    </button>
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                     )}
 
-                    <Pagination page={page} totalPages={data.totalPages} onChange={goToPage}></Pagination>
-                </>
+                    <Pagination page={page} totalPages={data.totalPages} disabled={isPlaceholderData} onChange={goToPage}></Pagination>
+                </section>
             )}
-        </main>
+
+            <CardDetailDialog card={selected} onClose={() => setSelected(null)}></CardDetailDialog>
+        </Page>
     );
 }
