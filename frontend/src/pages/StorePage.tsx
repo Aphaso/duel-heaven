@@ -4,6 +4,14 @@ import { Link, useSearchParams } from 'react-router';
 import { listStore } from '../api';
 import { formatPrice } from '../price';
 import Pagination from '../components/Pagination';
+import PlaylistCover from '../components/PlaylistCover';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Field';
+import { SearchIcon, StoreIcon } from '../ui/icons';
+import { Page } from '../ui/PageHeader';
+import { EmptyState, ErrorMessage, LoadingState } from '../ui/States';
+import { cn } from '../ui/styles';
 
 // Here too, if the backend changes this also needs to change
 const SEARCH_MAX_LENGTH = 50;
@@ -40,74 +48,94 @@ export default function StorePage() {
     }
 
     return (
-        <main className='mx-auto max-w-6xl space-y-4 px-8 py-6'>
-            <h1 className='text-2xl font-semibold'>Store</h1>
+        <Page>
+            {/* Store hero: gold accent, the search lives here */}
+            <section className='relative overflow-hidden rounded-panel border border-relic-900 bg-gradient-to-br from-relic-950 via-surface-raised to-arcane-950 p-6 shadow-panel sm:p-8'>
+                <div aria-hidden='true' className='pointer-events-none absolute -top-24 -right-16 size-72 rounded-full bg-relic-400/10 blur-3xl'></div>
+                <div className='relative max-w-2xl space-y-4'>
+                    <div className='space-y-1'>
+                        <p className='label text-accent'>Marketplace</p>
+                        <h1 className='font-display text-display text-ink'>Store</h1>
+                        <p className='text-sm text-ink-muted'>Combo playlists made by other Duelists. Buy once, get every update from the seller.</p>
+                    </div>
+                    {/* When the URL changes the field starts again from the new value */}
+                    <form key={q} onSubmit={handleSearch} role='search' className='flex flex-col gap-2 sm:flex-row'>
+                        <div className='relative min-w-0 flex-1'>
+                            <SearchIcon className='pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-subtle' />
+                            <Input
+                                name='q'
+                                defaultValue={q}
+                                maxLength={SEARCH_MAX_LENGTH}
+                                placeholder='Search by Playlist or Seller...'
+                                aria-label='Search the Store'
+                                className='h-11 pl-9'
+                            >
+                            </Input>
+                        </div>
+                        <div className='flex gap-2'>
+                            <Button type='submit' variant='accent' className='h-11 flex-1 sm:flex-none'>
+                                Search
+                            </Button>
+                            {q !== '' && (
+                                <Button variant='ghost' onClick={() => go({ q: '', page: 1 })} className='h-11'>
+                                    Clear
+                                </Button>
+                            )}
+                        </div>
+                    </form>
+                </div>
+            </section>
 
-            {/* When the URL changes the field starts again from the new value */}
-            <form key={q} onSubmit={handleSearch} className='flex gap-2'>
-                <input
-                    name='q'
-                    defaultValue={q}
-                    maxLength={SEARCH_MAX_LENGTH}
-                    placeholder='Search by Playlist or Seller...'
-                    aria-label='Search the Store'
-                    className='min-w-0 flex-q rounded border border-gray-300 px-3 py-1'
-                >
-                </input>
-                <button type='submit' className='rounded border border-gray-300 px-3 py-1 hover:bg-gray-50'>
-                    Search
-                </button>
-                {q !== '' && (
-                    <button
-                        type='button'
-                        onClick={() => go({ q: '', page: 1 })}
-                        className='rounded border border-gray-300 px-3 py-1 hover:bg-gray-50'
-                    >
-                        Clear
-                    </button>
-                )}
-            </form>
-
-            {store.isPending && <p>Loading...</p>}
-            {store.isError && <p className='text-red-600'>{store.error.message}</p>}
+            {store.isPending && <LoadingState></LoadingState>}
+            {store.isError && <ErrorMessage>{store.error.message}</ErrorMessage>}
 
             {store.data && (
-                <>
-                    {store.data.items.length === 0 && (
-                        <p className='text-gray-600'>
-                            {q ? `No playlists match "${q}".` : 'No Playlists for sale yet.'}
+                <section aria-label='Playlists for sale' className='space-y-4'>
+                    {q && store.data.items.length > 0 && (
+                        <p className='text-sm text-ink-subtle'>
+                            Results for <span className='text-ink'>“{q}”</span>
                         </p>
                     )}
-                    <ul className={`grid gap-4 sm:grid-cols-2 ${store.isPlaceholderData ? 'opacity-60' : ''}`}>
+                    {store.data.items.length === 0 && (
+                        <EmptyState
+                            icon={<StoreIcon />}
+                            title={q ? `No playlists match "${q}".` : 'No Playlists for sale yet.'}
+                            description={q ? 'Try another name or the username of a seller.' : 'Be the first: put one of your playlists on sale from its Edit page.'}
+                        ></EmptyState>
+                    )}
+                    <ul className={cn('grid gap-4 sm:grid-cols-2 xl:grid-cols-3 transition-opacity', store.isPlaceholderData && 'opacity-60')}>
                         {store.data.items.map((p) => (
-                            <li key={p.id} className='rounded border border-gray-200'>
-                                <Link to={`/store/${p.id}`} className='block space-y-1 rounded-t p-4 hover:bg-gray-50'>
-                                    <div className='flex items-start justify-between gap-3'>
-                                        <span className='font-semibold'>{p.name}</span>
-                                        <span className='whitespace-nowrap font-semibold'>
-                                            {formatPrice(p.priceCents)}
+                            <li key={p.id} className='group flex flex-col overflow-hidden rounded-panel border border-line bg-surface-raised shadow-panel transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-relic-800 hover:shadow-glow-accent'>
+                                <Link to={`/store/${p.id}`} className='focus-ring flex flex-1 gap-4 p-4'>
+                                    <PlaylistCover seed={p.id} className='size-20 shrink-0' />
+                                    <span className='min-w-0 flex-1 space-y-1'>
+                                        <span className='line-clamp-2 block font-display text-base font-semibold text-ink'>{p.name}</span>
+                                        {p.description && <span className='line-clamp-2 block text-sm text-ink-subtle'>{p.description}</span>}
+                                        <span className='flex flex-wrap gap-1.5 pt-1'>
+                                            {p.isOwn && <Badge tone='primary'>Yours</Badge>}
+                                            {p.purchased && <Badge tone='success'>Owned</Badge>}
                                         </span>
-                                    </div>
-                                    {p.description && <p className='text-sm'>{p.description}</p>}
-                                </Link>
-                                <div className='flex flex-wrap items-center gap-2 px-4 pb-3 text-sm text-gray-600'>
-                                    {p.seller ? (
-                                        <button
-                                            type='button'
-                                            title={`Show the Playlists of @${p.seller}`}
-                                            onClick={() => go({ q: p.seller ?? '', page: 1 })}
-                                            className='text-blue-700 hover:underline'
-                                        >
-                                            by @{p.seller}
-                                        </button>
-                                    ) : (
-                                        <span>by Unknown Duelist</span>
-                                    )}
-                                    <span>
-                                        · {p.comboCount} {p.comboCount === 1 ? 'Combo' : 'Combos'}
                                     </span>
-                                    {p.isOwn && <span className='text-xs text-blue-700'>Yours</span>}
-                                    {p.purchased && <span className='text-xs text-green-700'>Owned</span>}
+                                </Link>
+                                <div className='flex items-center justify-between gap-3 border-t border-line bg-surface-sunken/50 px-4 py-3'>
+                                    <span className='flex min-w-0 flex-wrap items-center gap-x-2 text-caption text-ink-subtle'>
+                                        {p.seller ? (
+                                            <button
+                                                type='button'
+                                                title={`Show the Playlists of @${p.seller}`}
+                                                onClick={() => go({ q: p.seller ?? '', page: 1 })}
+                                                className='focus-ring truncate rounded font-medium text-primary hover:underline'
+                                            >
+                                                by @{p.seller}
+                                            </button>
+                                        ) : (
+                                            <span>by Unknown Duelist</span>
+                                        )}
+                                        <span>
+                                            · {p.comboCount} {p.comboCount === 1 ? 'Combo' : 'Combos'}
+                                        </span>
+                                    </span>
+                                    <span className='numeric shrink-0 text-heading text-accent'>{formatPrice(p.priceCents)}</span>
                                 </div>
                             </li>
                         ))}
@@ -119,8 +147,8 @@ export default function StorePage() {
                         onChange={(next) => go({ q, page: next })}
                     >
                     </Pagination>
-                </>
+                </section>
             )}
-        </main>
+        </Page>
     );
 }

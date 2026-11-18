@@ -5,6 +5,9 @@ import { createPlaylist, getPlaylist, updatePlaylist } from '../api';
 import PlaylistEditor from '../components/PlaylistEditor';
 import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
 import { draftFromPlaylist, emptyPlaylistDraft, toPlaylistPayload, type PlaylistDraft } from '../playlistDraft';
+import { ChevronLeftIcon } from '../ui/icons';
+import { Page, PageHeader } from '../ui/PageHeader';
+import { ErrorMessage, LoadingState } from '../ui/States';
 
 export default function PlaylistEditPage() {
     const { id } = useParams<{ id: string }>();
@@ -41,32 +44,29 @@ function PlaylistEditScreen({ id }: { id: string | undefined }) {
     const playlist = playlistQuery.data;
 
     return (
-        <main className='mx-auto max-w-5xl p-8'>
-            <Link to={id ? `/playlists/${id}` : '/playlists'} className='text-sm text-blue-700 hover:underline'>
-                ← Back
+        <Page className='space-y-6'>
+            <Link to={id ? `/playlists/${id}` : '/playlists'} className='focus-ring inline-flex items-center gap-1 rounded-control text-sm text-ink-subtle hover:text-primary'>
+                <ChevronLeftIcon className='size-4' />
+                Back
             </Link>
 
-            {id && playlistQuery.isPending && <p className='mt-4 text-gray-500'>Loading...</p>}
-            {id && playlistQuery.isError && <p className='mt-4 text-red-600'>{playlistQuery.error.message}</p>}
+            {id && playlistQuery.isPending && <LoadingState></LoadingState>}
+            {id && playlistQuery.isError && <ErrorMessage>{playlistQuery.error.message}</ErrorMessage>}
 
             {(!id || playlist) && (
                 <>
-                    <h1 className='mt-2 text-2xl font-bold'>
-                        {playlist ? `Edit: ${playlist.name}` : 'New Playlist'}
-                    </h1>
-                    <div className='mt-4'>
-                        <PlaylistEditor
-                            initial={playlist ? draftFromPlaylist(playlist) : emptyPlaylistDraft()}
-                            buyers={playlist?._count.purchases ?? 0}
-                            saving={save.isPending}
-                            error={save.isError ? save.error.message : null}
-                            onSave={(draft) => save.mutate(draft)}
-                            onDirtyChange={setDirty}
-                        >
-                        </PlaylistEditor>
-                    </div>
+                    <PageHeader eyebrow={playlist ? 'Edit Playlist' : 'Library'} title={playlist ? playlist.name : 'New Playlist'}></PageHeader>
+                    <PlaylistEditor
+                        initial={playlist ? draftFromPlaylist(playlist) : emptyPlaylistDraft()}
+                        buyers={playlist?._count.purchases ?? 0}
+                        saving={save.isPending}
+                        error={save.isError ? save.error.message : null}
+                        onSave={(draft) => save.mutate(draft)}
+                        onDirtyChange={setDirty}
+                    >
+                    </PlaylistEditor>
                 </>
             )}
-        </main>
+        </Page>
     );
 }

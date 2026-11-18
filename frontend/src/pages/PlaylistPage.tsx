@@ -5,6 +5,14 @@ import { deletePlaylist, getCombo, getPlaylist } from '../api';
 import { formatPrice } from '../price';
 import ComboPlayer from '../components/ComboPlayer';
 import { useConfirm } from '../confirm/useConfirm';
+import PlaylistCover from '../components/PlaylistCover';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { ChevronLeftIcon, ChevronRightIcon, PencilIcon, PlaylistIcon, TrashIcon } from '../ui/icons';
+import { Page } from '../ui/PageHeader';
+import { Panel } from '../ui/Panel';
+import { EmptyState, ErrorMessage, LoadingState } from '../ui/States';
+import { buttonStyles, cn } from '../ui/styles';
 
 export default function PlaylistPage() {
     const { id } = useParams<{ id: string }>();
@@ -60,101 +68,114 @@ function PlaylistScreen({ id }: { id: string | undefined }) {
     }
 
     return (
-        <main className='mx-auto max-w-6xl p-8'>
-            <Link to='/playlists' className='text-sm text-blue-700 hover:underline'>
-                ← All Playlists
+        <Page className='space-y-6'>
+            <Link to='/playlists' className='focus-ring inline-flex items-center gap-1 rounded-control text-sm text-ink-subtle hover:text-primary'>
+                <ChevronLeftIcon className='size-4' />
+                All Playlists
             </Link>
 
-            {playlist.isPending && <p className='mt-4 text-gray-500'>Loading...</p>}
-            {playlist.isError && <p className='mt-4 text-red-600'>{playlist.error.message}</p>}
+            {playlist.isPending && <LoadingState></LoadingState>}
+            {playlist.isError && <ErrorMessage>{playlist.error.message}</ErrorMessage>}
 
             {playlist.data && (
                 <>
-                    <div className='mt-2 flex items-start justify-between gap-4'>
-                        <div>
-                            <h1 className='text-2xl font-bold'>{playlist.data.name}</h1>
-                            {playlist.data.description && (
-                                <p className='mt-1 text-gray-700'>{playlist.data.description}</p>
-                            )}
-                            {playlist.data.isForSale && playlist.data.priceCents !== null && (
-                                <p className='mt-1 text-sm text-green-800'>
-                                    For sale at {formatPrice(playlist.data.priceCents)}
-                                    {playlist.data._count.purchases > 0 && ` · ${playlist.data._count.purchases} sold`}
-                                </p>
-                            )}
+                    <header className='flex flex-wrap items-end gap-5'>
+                        <PlaylistCover seed={playlist.data.id} className='size-24 shrink-0 shadow-overlay sm:size-32' />
+                        <div className='min-w-0 flex-1 space-y-2'>
+                            <p className='label text-primary'>Playlist</p>
+                            <h1 className='font-display text-title break-words text-ink'>{playlist.data.name}</h1>
+                            {playlist.data.description && <p className='text-sm text-ink-subtle'>{playlist.data.description}</p>}
+                            <div className='flex flex-wrap items-center gap-2'>
+                                <Badge>{rows.length} combo{rows.length === 1 ? '' : 's'}</Badge>
+                                {playlist.data.isForSale && playlist.data.priceCents !== null && (
+                                    <Badge tone='accent'>For sale at {formatPrice(playlist.data.priceCents)}</Badge>
+                                )}
+                                {playlist.data._count.purchases > 0 && (
+                                    <span className='numeric text-caption text-success'>{playlist.data._count.purchases} sold</span>
+                                )}
+                            </div>
                         </div>
                         <div className='flex gap-2'>
-                            <Link to={`/playlists/${playlist.data.id}/edit`} className='rounded border px-3 py-1'>
-                                Edit
-                            </Link>
-                            <button
-                                type='button'
+                            <Button
+                                size='sm'
+                                variant='danger-ghost'
                                 disabled={remove.isPending}
                                 onClick={() => void askDelete(playlist.data.name, playlist.data._count.purchases)}
-                                className='rounded border border-red-600 px-3 py-1 text-red-700 disabled:opacity-40'
                             >
+                                <TrashIcon className='size-4' />
                                 Delete
-                            </button>
+                            </Button>
+                            <Link to={`/playlists/${playlist.data.id}/edit`} className={buttonStyles({ variant: 'primary', size: 'sm' })}>
+                                <PencilIcon className='size-4' />
+                                Edit
+                            </Link>
                         </div>
-                    </div>
-                    {remove.isError && <p className='mt-2 text-red-600'>{remove.error.message}</p>}
+                    </header>
+                    {remove.isError && <ErrorMessage>{remove.error.message}</ErrorMessage>}
 
                     {rows.length === 0 ? (
-                        <p className='mt-6 text-gray-500'>This Playlist is empty: use Edit to add Combos.</p>
+                        <EmptyState
+                            icon={<PlaylistIcon />}
+                            title='This Playlist is empty'
+                            description='Use Edit to add Combos.'
+                        ></EmptyState>
                     ) : (
-                        <div className='mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]'>
-                            <ol className='space-y-1 text-sm'>
-                                {rows.map((row, i) => (
-                                    <li key={row.id}>
-                                        <button
-                                            type='button'
-                                            onClick={() => setIndex(i)}
-                                            className={`w-full rounded px-2 py-1 text-left ${
-                                                i === currentIndex ? 'bg-blue-100 font-semibold' : 'hover:bg-gray-100'
-                                            }`}
-                                        >
-                                            {i + 1}. {row.combo.name}
-                                        </button>
-                                    </li>
-                                ))}
-                            </ol>
+                        <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]'>
+                            <Panel title='Combos' flush className='self-start'>
+                                <ol className='space-y-0.5 p-2'>
+                                    {rows.map((row, i) => {
+                                        const active = i === currentIndex;
+                                        return (
+                                            <li key={row.id}>
+                                                <button
+                                                    type='button'
+                                                    onClick={() => setIndex(i)}
+                                                    aria-current={active ? 'true' : undefined}
+                                                    className={cn(
+                                                        'focus-ring flex w-full items-center gap-3 rounded-control px-2 py-2 text-left text-sm transition-colors',
+                                                        active ? 'bg-aether-950 text-ink' : 'text-ink-muted hover:bg-surface-hover hover:text-ink',
+                                                    )}
+                                                >
+                                                    <span className={cn('numeric w-5 shrink-0 text-center text-caption', active ? 'text-primary' : 'text-ink-faint')}>
+                                                        {active ? '▶' : i + 1}
+                                                    </span>
+                                                    <span className={cn('min-w-0 flex-1 truncate', active && 'font-semibold')}>{row.combo.name}</span>
+                                                    <span className='numeric shrink-0 text-micro text-ink-faint'>{row.combo.stepCount}</span>
+                                                </button>
+                                            </li>
+                                        );
+                                    })}
+                                </ol>
+                            </Panel>
 
-                            <div className='space-y-4'>
-                                <div className='flex items-center justify-between gap-2'>
-                                    <h2 className='text-xl font-semibold'>
-                                        {current?.combo.name}
-                                        <span className='ml-2 text-sm font-normal text-gray-500'>
-                                            Combo {currentIndex + 1} / {rows.length}
-                                        </span>
-                                    </h2>
+                            <div className='min-w-0 space-y-4'>
+                                <div className='flex flex-wrap items-center justify-between gap-3'>
+                                    <div className='min-w-0'>
+                                        <p className='label text-ink-faint'>
+                                            Combo <span className='numeric'>{currentIndex + 1} / {rows.length}</span>
+                                        </p>
+                                        <h2 className='truncate font-display text-heading text-ink'>{current?.combo.name}</h2>
+                                    </div>
                                     <div className='flex gap-2'>
-                                        <button
-                                            type='button'
-                                            disabled={currentIndex <= 0}
-                                            onClick={() => setIndex(currentIndex - 1)}
-                                            className='rounded border px-3 py-1 disabled:opacity-40'
-                                        >
-                                            ◀ Previous Combo
-                                        </button>
-                                        <button
-                                            type='button'
-                                            disabled={currentIndex >= rows.length - 1}
-                                            onClick={() => setIndex(currentIndex + 1)}
-                                            className='rounded border px-3 py-1 disabled:opacity-40'
-                                        >
-                                            Next Combo ▶
-                                        </button>
+                                        <Button size='sm' disabled={currentIndex <= 0} onClick={() => setIndex(currentIndex - 1)}>
+                                            <ChevronLeftIcon className='size-4' />
+                                            Previous Combo
+                                        </Button>
+                                        <Button size='sm' disabled={currentIndex >= rows.length - 1} onClick={() => setIndex(currentIndex + 1)}>
+                                            Next Combo
+                                            <ChevronRightIcon className='size-4' />
+                                        </Button>
                                     </div>
                                 </div>
 
-                                {combo.isPending && <p className='text-gray-500'>Loading...</p>}
-                                {combo.isError && <p className='text-red-600'>{combo.error.message}</p>}
+                                {combo.isPending && <LoadingState></LoadingState>}
+                                {combo.isError && <ErrorMessage>{combo.error.message}</ErrorMessage>}
                                 {combo.data && <ComboPlayer key={combo.data.id} combo={combo.data}></ComboPlayer>}
                             </div>
                         </div>
                     )}
                 </>
             )}
-        </main>
+        </Page>
     );
 }

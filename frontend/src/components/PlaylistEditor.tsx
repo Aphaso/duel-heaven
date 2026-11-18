@@ -15,6 +15,13 @@ import {
     type PlaylistDraft,
 } from '../playlistDraft';
 import SortableRow from './SortableRow';
+import { Button } from '../ui/Button';
+import { Field, Input } from '../ui/Field';
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, PlusIcon, TrashIcon } from '../ui/icons';
+import { Panel } from '../ui/Panel';
+import { ErrorMessage, LoadingState, Notice } from '../ui/States';
+import { cn, linkStyles, panelStyles } from '../ui/styles';
+import { Switch } from '../ui/Switch';
 
 interface Props {
     initial: PlaylistDraft;
@@ -60,112 +67,121 @@ export default function PlaylistEditor({ initial, buyers, saving, error, onSave,
 
     return (
         <div className='space-y-6'>
-            <div className='grid gap-3 sm:grid-cols-2'>
-                <label className='block text-sm'>
-                    Name
-                    <input
-                        value={draft.name}
-                        onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                        maxLength={100}
-                        className='mt-1 w-full rounded border px-2 py-1'
-                    />
-                </label>
-                <label className='block text-sm'>
-                    Description (optional)
-                    <input
-                        value={draft.description}
-                        onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                        maxLength={1000}
-                        className='mt-1 w-full rounded border px-2 py-1'
-                    />
-                </label>
+            <div className={`${panelStyles} grid gap-4 p-panel sm:grid-cols-2`}>
+                <Field label='Name'>
+                    {(control) => (
+                        <Input
+                            {...control}
+                            value={draft.name}
+                            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                            maxLength={100}
+                        />
+                    )}
+                </Field>
+                <Field label='Description (optional)'>
+                    {(control) => (
+                        <Input
+                            {...control}
+                            value={draft.description}
+                            onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                            maxLength={1000}
+                        />
+                    )}
+                </Field>
             </div>
 
-            <section className='space-y-2 rounded border p-3'>
-                <label className='flex items-center gap-2 text-sm font-semibold'>
-                    <input
-                        type='checkbox'
-                        checked={draft.forSale}
-                        onChange={(e) => setDraft({ ...draft, forSale: e.target.checked })}
-                    >
-                    </input>
-                    Sell this Playlist in the Store
-                </label>
+            <section className={cn(panelStyles, 'space-y-4 p-panel', draft.forSale && 'holo-border')}>
+                <Switch
+                    checked={draft.forSale}
+                    onChange={(forSale) => setDraft({ ...draft, forSale })}
+                    label='Sell this Playlist in the Store'
+                    description='Other Duelists can buy it and watch all its combos.'
+                ></Switch>
                 {draft.forSale && (
-                    <div>
-                        <label className='block text-sm'>
-                            Price (EUR)
-                            <input
-                                value={draft.price}
-                                onChange={(e) => setDraft({ ...draft, price: e.target.value })}
-                                inputMode='decimal'
-                                placeholder='4.99'
-                                className='mt-1 block w-32 rounded border px-2 py-1'
-                            >
-                            </input>
-                        </label>
+                    <div className='space-y-3 pl-14'>
+                        <Field label='Price (EUR)' className='max-w-40'>
+                            {(control) => (
+                                <div className='relative'>
+                                    <span aria-hidden='true' className='pointer-events-none absolute inset-y-0 left-3 grid place-items-center font-mono text-sm text-accent'>€</span>
+                                    <Input
+                                        {...control}
+                                        value={draft.price}
+                                        onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+                                        inputMode='decimal'
+                                        placeholder='4.99'
+                                        className='numeric pl-7'
+                                    >
+                                    </Input>
+                                </div>
+                            )}
+                        </Field>
                         {connect.data && !connect.data.ready && (
-                            <p className='mt-2 text-sm text-amber-700'>
+                            <Notice>
                                 You cannot sell yet: set up your payments account first.{' '}
-                                <Link to='/account/payments' className='underline'>
+                                <Link to='/account/payments' className={linkStyles}>
                                     Go to Payments
                                 </Link>
-                            </p>
+                            </Notice>
                         )}
                     </div>
                 )}
                 {buyers > 0 && (
-                    <p className='text-sm text-gray-600'>
+                    <Notice tone='info'>
                         {buyers} {buyers === 1 ? 'person bought' : 'people bought'} this Playlist. They always
                         see your latest changes, including combos you remove, and a new price does not affect
                         what they paid. If you delete it, they keep a frozen copy of its last version.
-                    </p>
+                    </Notice>
                 )}
             </section>
 
             <div className='grid gap-6 md:grid-cols-2'>
-                <section>
-                    <h2 className='mb-2 text-lg font-semibold'>In this Playlist ({draft.combos.length})</h2>
+                <Panel title={<>In this Playlist <span className='numeric text-ink'>({draft.combos.length})</span></>}>
                     {draft.combos.length === 0 ? (
-                        <p className='text-sm text-gray-500'>Empty: add Combos from the list on the right.</p>
+                        <p className='rounded-control border border-dashed border-line-strong py-8 text-center text-sm text-ink-faint'>
+                            Empty: add Combos from the list on the right.
+                        </p>
                     ) : (
                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                             <SortableContext items={draft.combos.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-                                <ol className='space-y-1'>
+                                <ol className='space-y-1.5'>
                                     {draft.combos.map((c, i) => (
                                         <SortableRow key={c.id} id={c.id} name={c.name} disabled={saving}>
-                                            <span className='flex-1 text-sm'>
-                                                <span className='font-semibold'>
-                                                    {i + 1}. {c.name}
-                                                </span>
-                                                <span className='ml-2 text-gray-500'>{c.stepCount} steps</span>
+                                            <span className='numeric w-5 shrink-0 text-center text-caption text-ink-faint'>{i + 1}</span>
+                                            <span className='min-w-0 flex-1'>
+                                                <span className='block truncate text-sm font-semibold text-ink'>{c.name}</span>
+                                                <span className='numeric text-micro text-ink-subtle'>{c.stepCount} steps</span>
                                             </span>
-                                            <span className='flex gap-1 text-sm'>
-                                                <button
-                                                    type='button'
+                                            <span className='flex shrink-0 items-center gap-0.5'>
+                                                <Button
+                                                    size='icon'
+                                                    variant='ghost'
                                                     disabled={i === 0}
                                                     onClick={() => setDraft(shiftCombo(draft, i, -1))}
                                                     aria-label='Move up'
-                                                    className='rounded border px-2 disabled:opacity-30'
+                                                    className='size-7'
                                                 >
-                                                    ▲
-                                                </button>
-                                                <button
-                                                    type='button'
+                                                    <ChevronUpIcon className='size-4' />
+                                                </Button>
+                                                <Button
+                                                    size='icon'
+                                                    variant='ghost'
                                                     disabled={i === draft.combos.length - 1}
                                                     onClick={() => setDraft(shiftCombo(draft, i, 1))}
                                                     aria-label='Move down'
-                                                    className='rounded border px-2 disabled:opacity-30'
+                                                    className='size-7'
                                                 >
-                                                    ▼
-                                                </button>
-                                                <button
-                                                    type='button'
+                                                    <ChevronDownIcon className='size-4' />
+                                                </Button>
+                                                <Button
+                                                    size='icon'
+                                                    variant='danger-ghost'
                                                     onClick={() => setDraft(removeCombo(draft, c.id))}
-                                                    className='rounded border border-red-600 px-2 text-red-700'
+                                                    aria-label={`Remove ${c.name}`}
+                                                    title='Remove'
+                                                    className='size-7'
                                                 >
-                                                    Remove
-                                                </button>
+                                                    <TrashIcon className='size-4' />
+                                                </Button>
                                             </span>
                                         </SortableRow>
                                     ))}
@@ -173,61 +189,61 @@ export default function PlaylistEditor({ initial, buyers, saving, error, onSave,
                             </SortableContext>
                         </DndContext>
                     )}
-                </section>
+                </Panel>
 
-                <section>
-                    <h2 className='mb-2 text-lg font-semibold'>Your Combos</h2>
-                    {combos.isPending && <p className='text-sm text-gray-500'>Loading...</p>}
-                    {combos.isError && <p className='text-sm text-red-700'>{combos.error.message}</p>}
+                <Panel title='Your Combos'>
+                    {combos.isPending && <LoadingState></LoadingState>}
+                    {combos.isError && <ErrorMessage>{combos.error.message}</ErrorMessage>}
                     {combos.data && available.length === 0 && (
-                        <p className='text-sm text-gray-500'>
+                        <p className='text-sm text-ink-subtle'>
                             {combos.data.length === 0
                                 ? 'You have no combos yet: create one first.'
                                 : 'All your combos are already in this playlist.'}
                         </p>
                     )}
-                    <ul className='space-y-1'>
+                    <ul className='space-y-1.5'>
                         {available.map((c) => (
-                            <li key={c.id} className='flex items-center justify-between gap-2 rounded border p-2'>
-                                <span className='text-sm'>
-                                    <span className='font-semibold'>{c.name}</span>
-                                    <span className='ml-2 text-gray-500'>{c.stepCount} steps</span>
+                            <li key={c.id} className='flex items-center justify-between gap-2 rounded-control border border-line px-3 py-2 transition-colors hover:border-line-strong'>
+                                <span className='min-w-0'>
+                                    <span className='block truncate text-sm font-semibold text-ink'>{c.name}</span>
+                                    <span className='numeric text-micro text-ink-subtle'>{c.stepCount} steps</span>
                                 </span>
-                                <button
-                                    type='button'
-                                    onClick={() => setDraft(addCombo(draft, c))}
-                                    className='rounded border px-2 text-sm'
-                                >
+                                <Button size='sm' variant='ghost' onClick={() => setDraft(addCombo(draft, c))} className='text-primary'>
+                                    <PlusIcon className='size-4' />
                                     Add
-                                </button>
+                                </Button>
                             </li>
                         ))}
                     </ul>
-                </section>
+                </Panel>
             </div>
 
             {dirty && problems.length > 0 && (
-                <ul className='list-disc pl-5 text-sm text-amber-700'>
-                    {problems.map((p) => (
-                        <li key={p}>{p}</li>
-                    ))}
-                </ul>
+                <Notice title='Before saving:'>
+                    <ul className='list-disc space-y-0.5 pl-5'>
+                        {problems.map((p) => (
+                            <li key={p}>{p}</li>
+                        ))}
+                    </ul>
+                </Notice>
             )}
-            {error && <p className='whitespace-pre-line text-sm text-red-700'>{error}</p>}
+            {error && <ErrorMessage>{error}</ErrorMessage>}
 
-            <div className='flex items-center gap-2'>
-                <button
-                    type='button'
-                    disabled={!canSave}
-                    onClick={() => onSave(draft)}
-                    className='rounded bg-blue-600 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-40'
-                >
+            {/* Save bar always visible at the bottom of the screen */}
+            <div className='sticky bottom-20 z-20 flex items-center gap-3 rounded-panel border border-line bg-surface-overlay/90 px-4 py-3 shadow-overlay backdrop-blur-md lg:bottom-4'>
+                <Button variant='primary' disabled={!canSave} onClick={() => onSave(draft)}>
                     {saving ? 'Saving...' : 'Save'}
-                </button>
+                </Button>
                 {dirty ? (
-                    <span className='text-sm text-amber-700'>Unsaved Changes</span>
+                    <span className='flex items-center gap-1.5 text-caption text-warning'>
+                        <span className='size-1.5 rounded-full bg-warning'></span>
+                        Unsaved Changes
+                    </span>
                 ) : (
-                    <span className='text-sm text-gray-500'>Saved</span>
+                    <span className='flex items-center gap-1.5 text-caption text-ink-subtle'>
+                        <CheckIcon className='size-3.5 text-success' />
+                        Saved
+                    </span>
                 )}
             </div>
         </div>

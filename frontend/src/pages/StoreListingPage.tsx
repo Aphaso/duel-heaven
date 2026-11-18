@@ -2,6 +2,14 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router';
 import { getStoreListing, startCheckout } from '../api';
 import { formatPrice } from '../price';
+import { sellerLabel } from '../seller';
+import PlaylistCover from '../components/PlaylistCover';
+import { Button } from '../ui/Button';
+import { BoltIcon, CheckIcon, ChevronLeftIcon } from '../ui/icons';
+import { Page } from '../ui/PageHeader';
+import { Panel } from '../ui/Panel';
+import { ErrorMessage, LoadingState, Notice } from '../ui/States';
+import { buttonStyles } from '../ui/styles';
 
 export default function StoreListingPage() {
     const { id = '' } = useParams();
@@ -13,59 +21,85 @@ export default function StoreListingPage() {
         onSuccess: ({ url }) => window.location.assign(url),
     });
 
-    if (listing.isPending) return <p className='p-8'>Loading...</p>;
+    const back = (
+        <Link to='/store' className='focus-ring inline-flex items-center gap-1 rounded-control text-sm text-ink-subtle hover:text-accent'>
+            <ChevronLeftIcon className='size-4' />
+            Store
+        </Link>
+    );
+
+    if (listing.isPending) {
+        return (
+            <Page>
+                {back}
+                <LoadingState></LoadingState>
+            </Page>
+        );
+    }
     if (listing.isError) {
         return (
-            <div className='space-y-2 p-8'>
-                <p className='text-red-600'>{listing.error.message}</p>
-                <Link to='/store' className='underline'>Back to the store</Link>
-            </div>
+            <Page>
+                {back}
+                <ErrorMessage>{listing.error.message}</ErrorMessage>
+            </Page>
         );
     }
 
     const p = listing.data;
     return (
-        <main className='mx-auto max-w-3xl space-y-4 px-8 py-6'>
-            <Link to='/store' className='text-sm underline'>← Store</Link>
-            <h1 className='text-2xl font-semibold'>{p.name}</h1>
-            <p className='text-sm text-gray-600'>by @{p.seller}</p>
-            {p.description && <p>{p.description}</p>}
+        <Page className='space-y-6'>
+            {back}
 
-            <section className='space-y-1'>
-                <h2 className='font-semibold'>
-                    Included combos ({p.combos.length})
-                </h2>
-                <ul className='list-disc pl-6 text-sm'>
-                    {p.combos.map((c, i) => (
-                        <li key={i}>
-                            {c.name} <span className='text-gray-500'>· {c.stepCount} steps</span>
-                        </li>
-                    ))}
-                </ul>
-                <p className='text-xs text-gray-500'>
-                    You see the full combos after buying. Updates from the seller are included.
-                </p>
-            </section>
+            <div className='grid gap-8 lg:grid-cols-[20rem_minmax(0,1fr)]'>
+                {/* Cover and purchase box */}
+                <aside className='space-y-4 lg:sticky lg:top-[calc(var(--spacing-topbar)+1rem)] lg:self-start'>
+                    <PlaylistCover seed={p.id} className='w-full max-w-80 rounded-panel shadow-overlay' />
+                    <div className='holo-border space-y-4 rounded-panel p-5 shadow-panel'>
+                        <div>
+                            <p className='label text-ink-subtle'>Price</p>
+                            <p className='numeric text-display text-accent'>{formatPrice(p.priceCents)}</p>
+                        </div>
+                        {p.isOwn ? (
+                            <Notice tone='info'>This is your Playlist.</Notice>
+                        ) : p.purchased ? (
+                            <Link to={`/purchases/${p.id}`} className={buttonStyles({ variant: 'primary', size: 'lg', className: 'w-full' })}>
+                                <CheckIcon className='size-4' />
+                                You own this Playlist: open it
+                            </Link>
+                        ) : (
+                            <Button variant='accent' size='lg' onClick={() => buy.mutate()} loading={buy.isPending} className='w-full'>
+                                {buy.isPending ? 'Redirecting...' : `Buy for ${formatPrice(p.priceCents)}`}
+                            </Button>
+                        )}
+                        {buy.isError && <ErrorMessage>{buy.error.message}</ErrorMessage>}
+                        <p className='text-caption text-ink-faint'>
+                            You see the full combos after buying. Updates from the seller are included.
+                        </p>
+                    </div>
+                </aside>
 
-            <div className='flex items-center gap-4'>
-                {p.isOwn ? (
-                    <span className='text-sm text-gray-600'>This is your Playlist.</span>
-                ) : p.purchased ? (
-                    <Link to={`/purchases/${p.id}`} className='underline'>
-                        You own this Playlist: open it
-                    </Link>
-                ) : (
-                    <button
-                        type='button'
-                        onClick={() => buy.mutate()}
-                        disabled={buy.isPending}
-                        className='rounded border border-gray-300 px-4 py-2 font-semibold hover:bg-gray-50 disabled:opacity-50'
-                    >
-                        {buy.isPending ? 'Redirecting...' : `Buy for ${formatPrice(p.priceCents)}`}
-                    </button>
-                )}
+                <div className='min-w-0 space-y-6'>
+                    <header className='space-y-2'>
+                        <p className='label text-accent'>Playlist</p>
+                        <h1 className='font-display text-title break-words text-ink'>{p.name}</h1>
+                        <p className='text-sm text-ink-subtle'>by <span className='font-medium text-ink'>{sellerLabel(p.seller)}</span></p>
+                        {p.description && <p className='pt-2 whitespace-pre-line text-ink-muted'>{p.description}</p>}
+                    </header>
+
+                    <Panel title={<>Included combos <span className='numeric text-ink'>({p.combos.length})</span></>} flush>
+                        <ol className='divide-y divide-line'>
+                            {p.combos.map((c, i) => (
+                                <li key={i} className='flex items-center gap-4 px-panel py-3'>
+                                    <span className='numeric w-6 shrink-0 text-center text-sm text-ink-faint'>{i + 1}</span>
+                                    <BoltIcon className='size-4 shrink-0 text-secondary' />
+                                    <span className='min-w-0 flex-1 truncate text-sm font-medium text-ink'>{c.name}</span>
+                                    <span className='numeric shrink-0 text-caption text-ink-subtle'>{c.stepCount} steps</span>
+                                </li>
+                            ))}
+                        </ol>
+                    </Panel>
+                </div>
             </div>
-            {buy.isError && <p role='alert' className='text-sm text-red-600'>{buy.error.message}</p>}
-        </main>
+        </Page>
     );
 }

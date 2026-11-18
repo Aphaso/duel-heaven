@@ -7,6 +7,12 @@ import SortableRow from '../components/SortableRow';
 import { sortByIds } from '../playlistOrder';
 import { formatPrice } from '../price';
 import type { PlaylistSummary } from '../types';
+import PlaylistCover from '../components/PlaylistCover';
+import { Badge } from '../ui/Badge';
+import { PlaylistIcon, PlusIcon } from '../ui/icons';
+import { Page, PageHeader } from '../ui/PageHeader';
+import { EmptyState, ErrorMessage, LoadingState } from '../ui/States';
+import { buttonStyles } from '../ui/styles';
 
 export default function PlaylistListPage() {
     const queryClient = useQueryClient();
@@ -50,18 +56,30 @@ export default function PlaylistListPage() {
     }
 
     return (
-        <main className='mx-auto max-w-4xl p-8'>
-            <div className='flex items-center justify-between'>
-                <h1 className='text-2xl font-bold'>Playlists</h1>
-                <Link to='/playlists/new' className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700'>
-                    New Playlist
-                </Link>
-            </div>
+        <Page>
+            <PageHeader
+                eyebrow='Library'
+                title='Playlists'
+                description='Collect your combos in a set order. Drag them to reorder the list, or put them on sale in the Store.'
+                actions={
+                    <Link to='/playlists/new' className={buttonStyles({ variant: 'primary' })}>
+                        <PlusIcon className='size-4' />
+                        New Playlist
+                    </Link>
+                }
+            ></PageHeader>
 
-            {playlists.isPending && <p className='mt-4 text-gray-500'>Loading...</p>}
-            {playlists.isError && <p className='mt-4 text-red-600'>{playlists.error.message}</p>}
-            {playlists.data?.length === 0 && <p className='mt-4 text-gray-500'>No Playlists yet.</p>}
-            {reorder.isError && <p className='mt-4 text-red-600'>{reorder.error.message}</p>}
+            {playlists.isPending && <LoadingState></LoadingState>}
+            {playlists.isError && <ErrorMessage>{playlists.error.message}</ErrorMessage>}
+            {reorder.isError && <ErrorMessage>{reorder.error.message}</ErrorMessage>}
+            {playlists.data?.length === 0 && (
+                <EmptyState
+                    icon={<PlaylistIcon />}
+                    title='No Playlists yet.'
+                    description='Group your combos into a playlist to study them in order, or to sell them.'
+                    action={<Link to='/playlists/new' className={buttonStyles({ variant: 'primary' })}><PlusIcon className='size-4' />New Playlist</Link>}
+                ></EmptyState>
+            )}
 
             {playlists.data && playlists.data.length > 0 && (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -69,26 +87,29 @@ export default function PlaylistListPage() {
                         items={playlists.data.map((p) => p.id)}
                         strategy={verticalListSortingStrategy}
                     >
-                        <ul className='mt-4 space-y-2'>
+                        <ul className='space-y-2'>
                             {playlists.data.map((p) => (
                                 <SortableRow key={p.id} id={p.id} name={p.name} disabled={reorder.isPending}>
                                     <Link
                                         to={`/playlists/${p.id}`}
-                                        className='block flex-1 rounded p-1 hover:bg-gray-50'
+                                        className='focus-ring group flex min-w-0 flex-1 items-center gap-4 rounded-control p-1'
                                     >
-                                        <span className='font-semibold'>{p.name}</span>
-                                        <span className='ml-2 text-sm text-gray-500'>
-                                            {p._count.combos} combo{p._count.combos === 1 ? '' : 's'}
-                                        </span>
-                                        {p.isForSale && p.priceCents !== null && (
-                                            <span className='ml-2 rounded bg-green-100 px-2 py-0.5 text-xs text-green-800'>
-                                                For sale · {formatPrice(p.priceCents)}
+                                        <PlaylistCover seed={p.id} className='size-14 shrink-0' />
+                                        <span className='min-w-0 flex-1 space-y-1'>
+                                            <span className='block truncate font-display text-base font-semibold text-ink group-hover:text-primary'>{p.name}</span>
+                                            {p.description && <span className='block truncate text-sm text-ink-subtle'>{p.description}</span>}
+                                            <span className='flex flex-wrap items-center gap-2'>
+                                                <Badge>
+                                                    {p._count.combos} combo{p._count.combos === 1 ? '' : 's'}
+                                                </Badge>
+                                                {p.isForSale && p.priceCents !== null && (
+                                                    <Badge tone='accent'>For sale · {formatPrice(p.priceCents)}</Badge>
+                                                )}
+                                                {p._count.purchases > 0 && (
+                                                    <span className='numeric text-caption text-success'>{p._count.purchases} sold</span>
+                                                )}
                                             </span>
-                                        )}
-                                        {p._count.purchases > 0 && (
-                                            <span className='ml-2 text-xs text-gray-500'>{p._count.purchases} sold</span>
-                                        )}
-                                        {p.description && <p className='text-sm text-gray-600'>{p.description}</p>}
+                                        </span>
                                     </Link>
                                 </SortableRow>
                             ))}
@@ -96,6 +117,6 @@ export default function PlaylistListPage() {
                     </SortableContext>
                 </DndContext>
             )}
-        </main>
+        </Page>
     );
 }
