@@ -1,6 +1,11 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { getConnectStatus, startOnboarding } from '../api';
+import { Button } from '../ui/Button';
+import { CheckIcon, WalletIcon } from '../ui/icons';
+import { Page, PageHeader } from '../ui/PageHeader';
+import { ErrorMessage, LoadingState, Notice } from '../ui/States';
+import { cn } from '../ui/styles';
 
 export default function AccountPaymentsPage() {
     const [params] = useSearchParams();
@@ -15,77 +20,117 @@ export default function AccountPaymentsPage() {
         onSuccess: ({ url }) => window.location.assign(url),
     });
 
+    const header = (
+        <PageHeader
+            eyebrow='Settings'
+            title='Payments'
+            description='Sell your Playlists in the Store and get paid through Stripe.'
+        ></PageHeader>
+    );
+
     if (status.isPending) {
-        return <p className='p-8'>Loading...</p>;
+        return (
+            <Page width='narrow'>
+                {header}
+                <LoadingState></LoadingState>
+            </Page>
+        );
     }
     if (status.isError) {
-        return <p className='p-8 text-red-600'>{status.error.message}</p>;
+        return (
+            <Page width='narrow'>
+                {header}
+                <ErrorMessage>{status.error.message}</ErrorMessage>
+            </Page>
+        );
     }
 
     const { connected, ready, feePercent } = status.data;
 
     return (
-        <main className='mx-auto max-w-2xl space-y-4 px-8 py-6'>
-            <h1 className='text-2xl font-semibold'>Payments</h1>
+        <Page width='narrow'>
+            {header}
 
             {expired && !ready && (
-                <p className='rounded bg-amber-50 p-3 text-sm text-amber-800'>
-                    The previous setup link expired. Press the button below to get a new one.
-                </p>
+                <Notice>The previous setup link expired. Press the button below to get a new one.</Notice>
             )}
 
+            {/* Progress of the setup: account created → ready to receive payments */}
+            <ol className='grid grid-cols-2 gap-3'>
+                {[
+                    { label: 'Account created', done: connected },
+                    { label: 'Ready to get paid', done: ready },
+                ].map((stepItem, i) => (
+                    <li
+                        key={stepItem.label}
+                        className={cn(
+                            'flex items-center gap-3 rounded-panel border px-4 py-3',
+                            stepItem.done ? 'border-success/40 bg-success/5' : 'border-line bg-surface-raised',
+                        )}
+                    >
+                        <span
+                            className={cn(
+                                'numeric grid size-7 shrink-0 place-items-center rounded-full text-caption font-bold',
+                                stepItem.done ? 'bg-success text-ink-inverse' : 'border border-line-strong text-ink-faint',
+                            )}
+                        >
+                            {stepItem.done ? <CheckIcon className='size-4' /> : i + 1}
+                        </span>
+                        <span className={cn('text-sm font-semibold', stepItem.done ? 'text-ink' : 'text-ink-subtle')}>{stepItem.label}</span>
+                    </li>
+                ))}
+            </ol>
+
             {ready ? (
-                <section className='space-y-2 rounded border border-green-300 bg-green-50 p-4'>
-                    <h2 className='font-semibold text-green-800'>Your payments account is ready</h2>
-                    <p className='text-sm'>
+                <section className='space-y-2 rounded-panel border border-success/40 bg-success/5 p-panel'>
+                    <h2 className='flex items-center gap-2 font-display text-heading text-success'>
+                        <CheckIcon className='size-5' />
+                        Your payments account is ready
+                    </h2>
+                    <p className='text-sm text-ink-muted'>
                         You can sell Playlists in the Store. When someone buys one, the money goes to your
-                        Stripe account and the platform keeps {feePercent}%.
+                        Stripe account and the platform keeps <span className='numeric text-ink'>{feePercent}%</span>.
                     </p>
                 </section>
             ) : (
-                <section className='space-y-3 rounded border p-4'>
-                    <h2 className='font-semibold'>
-                        {connected ? 'Finish setting up your payments account' : 'Get paid for your Playlists'}
-                    </h2>
-                    <p className='text-sm text-gray-700'>
-                        To sell Playlists you need a payments account. Stripe collects your details on its own
-                        page: we never see or store them. The platform keeps {feePercent}% of each sale.
-                    </p>
+                <section className='holo-border space-y-4 rounded-panel p-panel shadow-panel'>
+                    <div className='flex items-start gap-3'>
+                        <span className='grid size-10 shrink-0 place-items-center rounded-control bg-relic-950 text-accent'>
+                            <WalletIcon className='size-5' />
+                        </span>
+                        <div className='space-y-1'>
+                            <h2 className='font-display text-heading text-ink'>
+                                {connected ? 'Finish setting up your payments account' : 'Get paid for your Playlists'}
+                            </h2>
+                            <p className='text-sm text-ink-muted'>
+                                To sell Playlists you need a payments account. Stripe collects your details on its own
+                                page: we never see or store them. The platform keeps <span className='numeric text-ink'>{feePercent}%</span> of each sale.
+                            </p>
+                        </div>
+                    </div>
                     {connected && (
-                        <p className='text-sm text-gray-600'>
+                        <Notice tone='info'>
                             Your account exists but cannot receive payments yet: the setup is not finished or
                             Stripe is still checking it.
-                        </p>
+                        </Notice>
                     )}
                     <div className='flex flex-wrap items-center gap-2'>
-                        <button
-                            type='button'
-                            onClick={() => onboarding.mutate()}
-                            disabled={onboarding.isPending}
-                            className='rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50'
-                        >
+                        <Button variant='accent' onClick={() => onboarding.mutate()} loading={onboarding.isPending}>
                             {onboarding.isPending
                                 ? 'Redirecting...'
                                 : connected
                                   ? 'Continue setup'
                                   : 'Connect with Stripe'}
-                        </button>
+                        </Button>
                         {connected && (
-                            <button
-                                type='button'
-                                onClick={() => void status.refetch()}
-                                disabled={status.isFetching}
-                                className='rounded border px-4 py-2 disabled:opacity-50'
-                            >
+                            <Button onClick={() => void status.refetch()} disabled={status.isFetching}>
                                 {status.isFetching ? 'Checking...' : 'Check again'}
-                            </button>
+                            </Button>
                         )}
                     </div>
-                    {onboarding.isError && (
-                        <p role='alert' className='text-sm text-red-600'>{onboarding.error.message}</p>
-                    )}
+                    {onboarding.isError && <ErrorMessage>{onboarding.error.message}</ErrorMessage>}
                 </section>
             )}
-        </main>
+        </Page>
     );
 }

@@ -8,9 +8,8 @@
  *  le utility corrispondenti (es. --color-aether-400 → bg-aether-400,
  *  text-aether-400, border-aether-400...).
  *
- *  Le palette di default di Tailwind (gray, blue, red...) restano disponibili
- *  finché il redesign non avrà migrato tutte le pagine; poi si potranno
- *  rimuovere con `--color-*: initial;` in testa al blocco @theme.
+ *  Tutta l'interfaccia usa i token qui sotto: le palette di default di
+ *  Tailwind (gray, blue, red...) non vanno più usate nei componenti.
  * ============================================================================
  */
 
@@ -212,57 +211,6 @@
     from { background-position: -200% 0; }
     to { background-position: 200% 0; }
   }
-}
-
-/* ----------------------------------------------------------------------------
- *  PONTE TEMPORANEO (legacy bridge) — DA RIMUOVERE A MIGRAZIONE FINITA
- *  Rimappa le palette di default usate dalle pagine non ancora ridisegnate
- *  su toni compatibili con il tema scuro. La scala gray è invertita
- *  (50 = superficie scura, 900 = testo chiaro). Quando nessun file userà più
- *  gray/red/blue/amber/green/yellow, eliminare l'intero blocco.
- * ------------------------------------------------------------------------- */
-@theme {
-  --color-gray-50: #171a30;
-  --color-gray-100: #1c1f35;
-  --color-gray-200: #2a2e48;
-  --color-gray-300: #3a3f5e;
-  --color-gray-400: #6a7199;
-  --color-gray-500: #8e95bd;
-  --color-gray-600: #a3a9cc;
-  --color-gray-700: #c4c9e4;
-  --color-gray-800: #d9ddf0;
-  --color-gray-900: #eef0fa;
-
-  --color-red-50: #2a1220;
-  --color-red-100: #3a1527;
-  --color-red-300: #7a2a3d;
-  --color-red-600: #f0435f;
-  --color-red-700: #ff6b84;
-  --color-red-800: #ff8fa2;
-
-  --color-blue-50: #0b2433;
-  --color-blue-100: #0e3346;
-  --color-blue-300: #105470;
-  --color-blue-400: #1fc6f5;
-  --color-blue-500: #1fc6f5;
-  --color-blue-600: #0786b0;
-  --color-blue-700: #0c9bcc;
-  --color-blue-900: #8ae8ff;
-
-  --color-amber-50: #2b1f08;
-  --color-amber-100: #3a2a0a;
-  --color-amber-300: #8f5a0a;
-  --color-amber-400: #f5b521;
-  --color-amber-700: #ffcc4d;
-  --color-amber-800: #ffe08a;
-
-  --color-green-50: #0c2a1e;
-  --color-green-100: #103826;
-  --color-green-300: #1d6b4a;
-  --color-green-700: #2fd08a;
-  --color-green-800: #6ee7b0;
-
-  --color-yellow-100: #3a330a;
 }
 
 /* ----------------------------------------------------------------------------

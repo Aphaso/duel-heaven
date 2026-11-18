@@ -3,6 +3,12 @@ import { useMutation } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { deleteAccount } from '../auth/authApi';
 import { useAuth } from '../auth/useAuth';
+import { Button } from '../ui/Button';
+import { Field, Input } from '../ui/Field';
+import { AlertIcon, ChevronRightIcon, WalletIcon } from '../ui/icons';
+import { Page, PageHeader } from '../ui/PageHeader';
+import { ErrorMessage } from '../ui/States';
+import { panelStyles } from '../ui/styles';
 
 export default function AccountPage() {
     const { user, signOut } = useAuth();
@@ -30,29 +36,55 @@ export default function AccountPage() {
         }
     }
 
-    return (
-        <main className='mx-auto max-w-2xl space-y-6 px-8 py-6'>
-            <h1 className='text-2xl font-semibold'>Account</h1>
+    const initial = (user.displayName ?? user.username ?? user.email ?? '?').charAt(0).toUpperCase();
 
-            <section className='space-y-1 rounded border border-gray-200 p-4 text-sm'>
-                <p>
-                    <span className='text-gray-600'>Username:</span> {user.username ?? '-'}
-                </p>
-                <p>
-                    <span className='text-gray-600'>Email:</span> {user.email ?? '-'}
-                </p>
-                <p>
-                    <span className='text-gray-600'>Name:</span> {user.displayName ?? '-'}
-                </p>
-                <Link to='/account/payments' className='inline-block pt-2 text-blue-700 hover:underline'>
-                    Payments settings
+    return (
+        <Page width='narrow'>
+            <PageHeader eyebrow='Settings' title='Account'></PageHeader>
+
+            <section className={`${panelStyles} overflow-hidden`}>
+                <div className='flex items-center gap-4 border-b border-line bg-gradient-to-r from-aether-950 via-surface-raised to-arcane-950 p-panel'>
+                    <span className='grid size-16 shrink-0 place-items-center rounded-full bg-gradient-to-br from-aether-500 to-arcane-500 font-display text-title text-ink shadow-glow-primary'>
+                        {initial}
+                    </span>
+                    <div className='min-w-0'>
+                        <p className='truncate font-display text-heading text-ink'>{user.displayName ?? '-'}</p>
+                        <p className='truncate text-sm text-ink-subtle'>{user.username ? `@${user.username}` : '-'}</p>
+                    </div>
+                </div>
+                <dl className='divide-y divide-line'>
+                    {[
+                        { label: 'Username', value: user.username ?? '-' },
+                        { label: 'Email', value: user.email ?? '-' },
+                        { label: 'Name', value: user.displayName ?? '-' },
+                    ].map((row) => (
+                        <div key={row.label} className='flex items-center justify-between gap-4 px-panel py-3'>
+                            <dt className='label text-ink-subtle'>{row.label}</dt>
+                            <dd className='min-w-0 truncate text-sm text-ink'>{row.value}</dd>
+                        </div>
+                    ))}
+                </dl>
+                <Link
+                    to='/account/payments'
+                    className='focus-ring flex items-center gap-3 border-t border-line px-panel py-3 text-sm text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink'
+                >
+                    <WalletIcon className='size-4 text-accent' />
+                    <span className='flex-1'>Payments settings</span>
+                    <ChevronRightIcon className='size-4 text-ink-faint' />
                 </Link>
             </section>
 
-            <section className='space-y-3 rounded border border-red-300 bg-red-50 p-4'>
-                <h2 className='font-semibold text-red-800'>Delete Account</h2>
-                <p className='text-sm text-gray-800'>This cannot be undone. What happens:</p>
-                <ul className='list-disc space-y-1 pl-5 text-sm text-gray-800'>
+            <section className='space-y-4 rounded-panel border border-danger/40 bg-danger/5 p-panel'>
+                <div className='flex items-start gap-3'>
+                    <span className='grid size-9 shrink-0 place-items-center rounded-full bg-danger/15 text-danger'>
+                        <AlertIcon className='size-5' />
+                    </span>
+                    <div className='space-y-1'>
+                        <h2 className='font-display text-heading text-danger'>Delete Account</h2>
+                        <p className='text-sm text-ink-muted'>This cannot be undone. What happens:</p>
+                    </div>
+                </div>
+                <ul className='list-disc space-y-1 pl-5 text-sm text-ink-muted marker:text-danger/70'>
                     <li>Your Decks, Combos, WTH? guides and the Playlists nobody bought are erased.</li>
                     <li>The Playlists you bought are removed from your account.</li>
                     <li>
@@ -61,27 +93,26 @@ export default function AccountPage() {
                     </li>
                     <li>If you connected a payments account, it is closed.</li>
                 </ul>
-                <form onSubmit={handleSubmit} className='space-y-2'>
-                    <label className='block text-sm'>
-                        To confirm, type <strong>{expected}</strong>
-                        <input
-                            value={typed}
-                            onChange={(event) => setTyped(event.target.value)}
-                            autoComplete='off'
-                            className='mt-1 block w-full rounded border border-gray-300 bg-white px-3 py-1'
-                        >
-                        </input>
-                    </label>
-                    <button
-                        type='submit'
-                        disabled={!matches || remove.isPending}
-                        className='rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50'
-                    >
+                <form onSubmit={handleSubmit} className='space-y-3'>
+                    <Field label={<>To confirm, type <strong className='normal-case tracking-normal text-ink'>{expected}</strong></>}>
+                        {(control) => (
+                            <Input
+                                {...control}
+                                value={typed}
+                                onChange={(event) => setTyped(event.target.value)}
+                                autoComplete='off'
+                                spellCheck={false}
+                                className='border-danger/40 focus:border-danger'
+                            >
+                            </Input>
+                        )}
+                    </Field>
+                    <Button type='submit' variant='danger' disabled={!matches} loading={remove.isPending}>
                         {remove.isPending ? 'Deleting...' : 'Delete my Account'}
-                    </button>
-                    {remove.isError && <p role='alert' className='text-sm text-red-700'>{remove.error.message}</p>}
+                    </Button>
+                    {remove.isError && <ErrorMessage>{remove.error.message}</ErrorMessage>}
                 </form>
             </section>
-        </main>
+        </Page>
     );
 }

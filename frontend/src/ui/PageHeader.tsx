@@ -23,10 +23,16 @@ export function PageHeader({ title, eyebrow, description, actions, className }: 
     );
 }
 
+const PAGE_WIDTHS = {
+    wide: 'max-w-page',
+    narrow: 'max-w-3xl',
+    compact: 'max-w-xl',
+} as const;
+
 /** Standard page container: width, side gutters and spacing between sections. */
-export function Page({ className, children }: { className?: string; children: ReactNode }) {
+export function Page({ width = 'wide', className, children }: { width?: keyof typeof PAGE_WIDTHS; className?: string; children: ReactNode }) {
     return (
-        <main className={cn('mx-auto w-full max-w-page space-y-8 px-gutter py-8 lg:px-gutter-lg', className)}>
+        <main className={cn('mx-auto w-full space-y-8 px-gutter py-8 lg:px-gutter-lg', PAGE_WIDTHS[width], className)}>
             {children}
         </main>
     );

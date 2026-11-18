@@ -134,6 +134,12 @@ export const ChevronDownIcon = (p: IconProps) => (
     </Icon>
 );
 
+export const PlayIcon = (p: IconProps) => (
+    <Icon {...p}>
+        <path d='M7 4.5v15L19.5 12 7 4.5Z' />
+    </Icon>
+);
+
 export const SkipStartIcon = (p: IconProps) => (
     <Icon {...p}>
         <path d='M6 5v14M18 6l-8.5 6 8.5 6V6Z' />
