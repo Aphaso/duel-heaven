@@ -28,7 +28,7 @@ export async function buildPlaylistSnapshot(
         name: full.name,
         description: full.description,
         // The owner id is left out: the snapshot must not point to a user who may delete their account
-        combo: full.combos.map((c) => {
+        combos: full.combos.map((c) => {
             const { ownerId, ...combo } = c.combo;
             void ownerId;
             return combo;

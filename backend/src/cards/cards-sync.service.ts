@@ -26,14 +26,14 @@ export class CardsSyncService {
     constructor(private readonly prisma: PrismaService) {}
 
     async sync() {
-        this.logger.log('Scarico il catalogo da YGOPRODeck...');
+        this.logger.log('Downloading catalog from YGOPRODeck...');
         const res = await fetch(API_URL);
         if (!res.ok) {
-            throw new Error(`YGOPRODeckl ha risposto con stato ${res.status}`);
+            throw new Error(`YGOPRODeck answered with status ${res.status}`);
         }
         const body = (await res.json()) as { data: ApiCard[] };
         const cards = body.data;
-        this.logger.log(`Ricevute ${cards.length} carte, le salvo...`);
+        this.logger.log(`Received ${cards.length} cards, saving...`);
 
         for (let i = 0; i < cards.length; i += BATCH_SIZE) {
             const batch = cards.slice(i, i + BATCH_SIZE);

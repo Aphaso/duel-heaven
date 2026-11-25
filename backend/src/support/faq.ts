@@ -13,7 +13,7 @@ export const FAQ: FaqEntry[] = [
     id: 'cards-search',
     question: 'How do I find a card?',
     answer:
-      'Open the Cards page and type part of the name in the search box. You can also filter by type or attribute. Card data and images come from YGOPRODeck and are stored on our own server.',
+      'Open the Cards page and type part of the name in the search box. Card data and images come from YGOPRODeck and are stored on our own server.',
     keywords: ['card', 'search', 'find', 'look up', 'filter', 'image', 'ygoprodeck'],
     link: { label: 'Go to Cards', to: '/cards' },
   },

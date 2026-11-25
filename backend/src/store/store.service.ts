@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { clampPage, normalizeStoreQuery, STORE_PAGE_SIZE, totalPagesFor } from './store-query';
-import { contains } from 'class-validator';
 
 @Injectable()
 export class StoreService {

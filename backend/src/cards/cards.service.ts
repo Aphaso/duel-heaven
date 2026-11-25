@@ -29,7 +29,7 @@ export class CardsService {
     async findOne(id: number) {
         const card = await this.prisma.card.findUnique({ where: { id } });
         if (!card) {
-            throw new NotFoundException(`Carta ${id} non trovata`);
+            throw new NotFoundException(`Card ${id} not found`);
         }
         return card;
     }

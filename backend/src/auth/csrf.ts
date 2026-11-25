@@ -1,4 +1,3 @@
-import { error } from "console";
 import type { NextFunction, Request, Response } from "express";
 
 export const CSRF_HEADER = 'x-requested-with';
