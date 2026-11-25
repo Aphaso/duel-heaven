@@ -49,7 +49,7 @@ export class CardsSyncService {
             );
         }
 
-        this.logger.log('Sincronizzazione completata.');
+        this.logger.log('Synchronization complete.');
         return { synced: cards.length };
     }
 
